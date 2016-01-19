@@ -5,6 +5,7 @@ const Lab = require('lab')
 const Code = require('code')
 const proxyquire = require('proxyquire')
 const sinon = require('sinon')
+require('sinon-as-promised')
 
 const Application = require('../../lib/application.js')
 
@@ -15,7 +16,7 @@ const beforeEach = lab.beforeEach
 const afterEach = lab.afterEach
 const expect = Code.expect
 
-describe('createAppConnection', function () {
+describe('RabbitUtils - createAppConnection', function () {
   let ctx
 
   beforeEach(function (done) {

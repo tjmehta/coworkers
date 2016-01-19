@@ -26,27 +26,39 @@ describe('Context', function () {
   describe('constructor', function () {
     beforeEach(function (done) {
       ctx.queueName = 'queue-name'
-      ctx.message = {}
+      ctx.message = {
+        fields: {
+          deliveryTag: 1
+        }
+      }
       ctx.app = new Application()
       ctx.app.connection = {}
       ctx.app.consumerChannel = {}
       ctx.app.publisherChannel = {}
-      ctx.app.onerror = function () {}
-      ctx.app.finalhandler = function () {}
+      ctx.app.context = { appFoo: 1, app: 'no' }
+      ctx.queueOpts = { exclusive: true }
+      ctx.consumeOpts = { noAck: true }
+      ctx.app.queue(ctx.queueName, ctx.queueOpts, ctx.consumeOpts, function * () {})
       done()
     })
 
     it('should create a context', function (done) {
       const app = ctx.app
       const context = new Context(ctx.app, ctx.queueName, ctx.message)
-      expect(context).to.be.an.instanceOf(Context)
+      // expect context to be added on the message
+      expect(ctx.message.context).to.equal(context)
+      // expect context to copy app properties
+      expect(context.appFoo).to.equal(ctx.app.context.appFoo)
+      expect(context.app).to.equal(app)
       expect(context.connection).to.equal(app.connection)
       expect(context.consumerChannel).to.equal(app.consumerChannel)
       expect(context.publisherChannel).to.equal(app.publisherChannel)
-      expect(context.onerror).to.be.a.function()
-      expect(context.finalhandler).to.be.a.function()
+      // expect context properties
       expect(context.queueName).to.equal(ctx.queueName)
       expect(context.message).to.equal(ctx.message)
+      expect(context.deliveryTag).to.equal(ctx.message.fields.deliveryTag)
+      expect(context.queueOpts).to.contain(ctx.queueOpts)
+      expect(context.consumeOpts).to.contain(ctx.consumeOpts)
       expect(context.state).to.deep.equal({})
       // ack, nack, ackAll, nackAll tested below
       done()
@@ -56,13 +68,19 @@ describe('Context', function () {
   describe('instance methods', function () {
     beforeEach(function (done) {
       ctx.queueName = 'queue-name'
-      ctx.message = {}
+      ctx.message = {
+        fields: {
+          deliveryTag: 1
+        }
+      }
       ctx.app = new Application()
       ctx.app.connection = {}
       ctx.app.consumerChannel = {}
       ctx.app.publisherChannel = {}
-      ctx.app.onerror = function () {}
-      ctx.app.finalhandler = function () {}
+      ctx.app.context = { appFoo: 1, app: 'no' }
+      ctx.queueOpts = { exclusive: true }
+      ctx.consumeOpts = { noAck: true }
+      ctx.app.queue(ctx.queueName, ctx.queueOpts, ctx.consumeOpts, function * () {})
       // create context
       ctx.context = new Context(ctx.app, ctx.queueName, ctx.message)
       done()

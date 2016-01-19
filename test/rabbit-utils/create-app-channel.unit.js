@@ -4,6 +4,7 @@ const EventEmitter = require('events').EventEmitter
 const Lab = require('lab')
 const Code = require('code')
 const sinon = require('sinon')
+require('sinon-as-promised')
 
 const Application = require('../../lib/application.js')
 const createAppChannel = require('../../lib/rabbit-utils/create-app-channel.js')
@@ -15,7 +16,7 @@ const beforeEach = lab.beforeEach
 const afterEach = lab.afterEach
 const expect = Code.expect
 
-describe('createAppChannel', function () {
+describe('RabbitUtils - createAppChannel', function () {
   let ctx
 
   beforeEach(function (done) {
@@ -28,6 +29,8 @@ describe('createAppChannel', function () {
     sinon.spy(ctx.consumerChannel, 'once')
     ctx.publisherChannel = new EventEmitter()
     sinon.spy(ctx.publisherChannel, 'once')
+    ctx.consumerChannel.ack = function () {}
+    ctx.consumerChannel.nack = function () {}
     // mock connection
     ctx.app.connection = {
       createChannel: sinon.stub()
@@ -52,9 +55,20 @@ describe('createAppChannel', function () {
         // assert app emit channel:create
         sinon.assert.calledOnce(ctx.app.emit)
         sinon.assert.calledWith(ctx.app.emit, 'channel:create', ctx.consumerChannel)
+        // assert ack and nack wrapped w/ multi call error
+        const message = { context: {} }
+        ctx.consumerChannel.ack(message)
+        expect(message.context.messageAcked).to.be.true()
+        expect(function () {
+          ctx.consumerChannel.ack(message)
+        }).to.throw(/cannot be acked/)
+        expect(function () {
+          ctx.consumerChannel.nack(message)
+        }).to.throw(/cannot be acked/)
         done()
       }).catch(done)
   })
+
   it('should create a publisherChannel for app', function (done) {
     ctx.app.connection.createChannel.resolves(ctx.publisherChannel)
     createAppChannel(ctx.app, 'publisherChannel')

@@ -1,34 +1,54 @@
 'use strict'
+
+const Code = require('code')
 const Lab = require('lab')
 const sinon = require('sinon')
 
 const Application = require('../../lib/application.js')
 const Context = require('../../lib/context.js')
+const NoAckError = require('../../lib/no-ack-error.js')
 const respond = require('../../lib/rabbit-utils/app-respond.js')
 
 const lab = exports.lab = Lab.script()
 const describe = lab.describe
+const expect = Code.expect
 const it = lab.it
 const beforeEach = lab.beforeEach
 
-describe('respond', function () {
+describe('RabbitUtils - appRespond', function () {
   let ctx
 
   beforeEach(function (done) {
     ctx = {}
     // create app
     ctx.app = new Application()
-    ctx.finalhandler = ctx.app.finalhandler = sinon.stub()
     ctx.queueName = 'queue-name'
-    ctx.message = 'message'
+    ctx.message = {
+      fields: {
+        deliveryTag: 1
+      }
+    }
+    ctx.app.queue(ctx.queueName, function * () {})
     ctx.context = new Context(ctx.app, ctx.queueName, ctx.message)
+    ctx.context.consumerChannel = {}
+    sinon.stub(ctx.app, 'emit')
     done()
   })
 
-  it('should call final handler if there is no action', function (done) {
+  it('should emit app error if there is no ack', function (done) {
+    const matchNoAckErr = sinon.match(function (err) {
+      expect(err).to.be.an.instanceOf(NoAckError)
+      return true
+    })
     respond.call(ctx.context)
-    sinon.assert.calledOnce(ctx.finalhandler)
-    sinon.assert.calledOn(ctx.finalhandler, ctx.context)
+    sinon.assert.calledWith(ctx.app.emit, 'error', matchNoAckErr, ctx.context.consumerChannel)
+    done()
+  })
+
+  it('should not error if there is no ack on a queue w/ consumeOpts.noAck', function (done) {
+    ctx.context.consumeOpts = { noAck: true }
+    respond.call(ctx.context)
+    sinon.assert.notCalled(ctx.app.emit)
     done()
   })
 

@@ -6,7 +6,6 @@
   "scripts": {
     "test": "lab --verbose --assert code --coverage",
     "test-watch": "nodemon -x npm test",
-    "test-watch-one": "nodemon -x 'npm test -- -i 46'",
     "lint": "standard",
     "format": "standard-format"
   },
@@ -34,9 +33,12 @@
   "dependencies": {
     "101": "^1.2.0",
     "assert-args": "^1.0.3",
+    "callsite": "^1.0.0",
+    "debug": "^2.2.0",
     "is-generator": "^1.0.2",
     "nodeify": "^1.0.0",
     "object-values": "^1.0.0",
+    "times-loop": "^1.0.0",
     "uuid": "^2.0.1"
   },
   "devDependencies": {
