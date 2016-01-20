@@ -268,6 +268,7 @@ describe('Application', function () {
             './context.js': ctx.Context
           })
           ctx.app = new Application()
+          ctx.context.app = ctx.app
           // setup middlewares
           ctx.invokeOrder = []
           ctx.app.use(function * (next) {
@@ -335,6 +336,8 @@ describe('Application', function () {
             }
           })
           ctx.app = new Application()
+          ctx.context.app = ctx.app
+          sinon.stub(ctx.app, 'emit')
           done()
         })
         afterEach(function (done) {
@@ -342,66 +345,16 @@ describe('Application', function () {
           done()
         })
 
-        describe('error handler success', function () {
-          beforeEach(function (done) {
-            sinon.stub(ctx.app, 'emit')
-            done()
-          })
-
-          it('should app.emit mw errors', function (done) {
-            const handler = ctx.app.messageHandler(ctx.queueName)
-            handler(ctx.message)
-              .then(function () {
-                sinon.assert.calledOnce(ctx.mwPromise)
-                sinon.assert.calledOnce(ctx.app.emit)
-                sinon.assert.calledWith(ctx.app.emit, 'error', ctx.err, ctx.context)
-                done()
-              })
-              .catch(done)
-          })
-
-          describe('message already acked', function () {
-            beforeEach(function (done) {
-              ctx.context.messageAcked = true
+        it('should app.emit mw errors', function (done) {
+          const handler = ctx.app.messageHandler(ctx.queueName)
+          handler(ctx.message)
+            .then(function () {
+              sinon.assert.calledOnce(ctx.mwPromise)
+              sinon.assert.calledOnce(ctx.app.emit)
+              sinon.assert.calledWith(ctx.app.emit, 'error', ctx.err, ctx.context)
               done()
             })
-
-            it('should app.emit mw errors w/out context', function (done) {
-              const handler = ctx.app.messageHandler(ctx.queueName)
-
-              handler(ctx.message)
-                .then(function () {
-                  sinon.assert.calledOnce(ctx.mwPromise)
-                  sinon.assert.calledOnce(ctx.app.emit)
-                  sinon.assert.calledWith(ctx.app.emit, 'error', ctx.err)
-                  expect(ctx.app.emit.args[0]).to.have.a.length(2)
-                  done()
-                })
-                .catch(done)
-            })
-          })
-        })
-
-        describe('error handler error', function () {
-          beforeEach(function (done) {
-            ctx.err = new Error('boom')
-            sinon.stub(ctx.app, 'emit', function () {
-              throw ctx.err
-            })
-            done()
-          })
-
-          it('should throw an error that escapes the promise', function (done) {
-            const handler = ctx.app.messageHandler(ctx.queueName)
-            process.once('uncaughtException', function (err) {
-              expect(err).to.equal(ctx.err)
-              done()
-            })
-            handler(ctx.message)
-              .catch(function () {
-                done(new Error('should not make it here: catch'))
-              })
-          })
+            .catch(done)
         })
       })
     })

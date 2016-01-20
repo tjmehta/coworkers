@@ -41,7 +41,7 @@ describe('RabbitUtils - appRespond', function () {
       return true
     })
     respond.call(ctx.context)
-    sinon.assert.calledWith(ctx.app.emit, 'error', matchNoAckErr, ctx.context.consumerChannel)
+    sinon.assert.calledWith(ctx.app.emit, 'error', matchNoAckErr, ctx.context)
     done()
   })
 

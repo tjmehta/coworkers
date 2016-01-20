@@ -129,6 +129,21 @@ describe('Context', function () {
           done()
         })
       })
+
+      describe('after onerror', function () {
+        beforeEach(function (done) {
+          sinon.stub(ctx.app, 'emit')
+          Context.onerror(ctx.context)
+          done()
+        })
+
+        it('should throw a special error when get/set ack,nack,..', function (done) {
+          expect(function () {
+            ctx.context.ack
+          }).to.throw(/Ack.*not available/)
+          done()
+        })
+      })
     })
 
     describe('publish', function () {
@@ -180,18 +195,18 @@ describe('Context', function () {
           correlationId: ctx.correlationId
         }
         // replies must be made on same channel which message was recieved
-        ctx.context.consumerChannel.sendToQueue = sinon.stub()
+        ctx.context.publisherChannel.sendToQueue = sinon.stub()
         done()
       })
 
       it('should reply to an rpc request message', function (done) {
         ctx.context.reply(ctx.content, ctx.options)
-        sinon.assert.calledOnce(ctx.context.consumerChannel.sendToQueue)
+        sinon.assert.calledOnce(ctx.context.publisherChannel.sendToQueue)
         const expectedOptions = put(ctx.options, {
           correlationId: ctx.correlationId
         })
         sinon.assert.calledWith(
-          ctx.context.consumerChannel.sendToQueue,
+          ctx.context.publisherChannel.sendToQueue,
           ctx.replyTo, new Buffer(ctx.content), expectedOptions)
         done()
       })
