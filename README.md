@@ -454,6 +454,7 @@ app.queue('multiply-queue', function * () {
 
 ## Channel
 see amqplib channel documentation
+http://www.squaremobius.net/amqp.node/channel_api.html#channel
 
 ## Connection
 see amqplib connection documentation
