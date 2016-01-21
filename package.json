@@ -1,0 +1,62 @@
+{
+  "name": "coworkers",
+  "version": "0.0.0",
+  "description": "RabbitMQ consumer service framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "lab --verbose --assert code --threshold 100",
+    "test-watch": "nodemon -x npm test",
+    "lint": "standard",
+    "format": "standard-format"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tjmehta/coworkers.git"
+  },
+  "keywords": [
+    "rabbitmq",
+    "consumer",
+    "service",
+    "microservice",
+    "framework",
+    "soa"
+  ],
+  "author": "Tejesh Mehta",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tjmehta/coworkers/issues"
+  },
+  "homepage": "https://github.com/tjmehta/coworkers",
+  "peerDependencies": {
+    "amqplib": ">=0.2.1"
+  },
+  "dependencies": {
+    "101": "^1.2.0",
+    "assert-args": "^1.0.3",
+    "callsite": "^1.0.0",
+    "co": "^4.6.0",
+    "debug": "^2.2.0",
+    "ee-first": "^1.1.1",
+    "is-generator": "^1.0.2",
+    "koa-compose": "^2.3.0",
+    "nodeify": "^1.0.0",
+    "object-values": "^1.0.0",
+    "times-loop": "^1.0.0",
+    "uuid": "^2.0.1"
+  },
+  "devDependencies": {
+    "amqplib": "^0.4.0",
+    "babel-eslint": "^4.1.6",
+    "code": "^2.0.1",
+    "lab": "^8.0.1",
+    "nodemon": "^1.8.1",
+    "proxyquire": "^1.7.3",
+    "rabbitmq-schema": "^1.1.0",
+    "sinon": "^1.17.2",
+    "sinon-as-promised": "^4.0.0",
+    "standard": "^5.4.1"
+  },
+  "standard": {
+    "parser": "babel-eslint"
+  }
+}
