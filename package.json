@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/tjmehta/coworkers",
   "peerDependencies": {
-    "amqplib": "^0.2.1"
+    "amqplib": ">=0.2.1"
   },
   "dependencies": {
     "101": "^1.2.0",
@@ -45,6 +45,7 @@
     "uuid": "^2.0.1"
   },
   "devDependencies": {
+    "amqplib": "^0.4.0",
     "babel-eslint": "^4.1.6",
     "code": "^2.0.1",
     "lab": "^8.0.1",
