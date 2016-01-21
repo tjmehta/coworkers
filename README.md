@@ -1,4 +1,7 @@
-# coworkers
+![coworkers](http://i.imgur.com/WUEcl4e.png)
+===
+
+[![Build Status](https://travis-ci.org/tjmehta/coworkers.svg?branch=master)](https://travis-ci.org/tjmehta/coworkers)
 
 Coworkers is a RabbitMQ microservice framework
 
