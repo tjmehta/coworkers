@@ -2,7 +2,7 @@
 
 Coworkers is a RabbitMQ microservice framework
 
-Coworkers is a new microservice framework heavily inspired by Koa, which aims to be a simple, robust, and scalable foundation for creating RabbitMQ microservices. Through leveraging generators Coworkers allows you to ditch callbacks and greatly increase error-handling. Coworkers also uses Amqplib, a battle-tested AMQP client, under the hood to communicate with RabbitMQ and has best-practices baked in. Finally, Coworkers enables easy scalability by running each queue-consumer in it's own process through node clustering (or manual process management).
+Coworkers is a new microservice framework heavily inspired by Koa, which aims to be a simple, robust, and scalable foundation for creating RabbitMQ microservices. Through leveraging generators Coworkers allows you to ditch callbacks and greatly increase error-handling. Coworkers also uses Amqplib, a battle-tested AMQP client, under the hood to communicate with RabbitMQ and has best-practices baked in. Finally, Coworkers enables easy scalability by running each queue-consumer in it's own process through node clustering (optional).
 
 # Installation
 ```bash
@@ -224,6 +224,7 @@ Connect to RabbitMQ, create channels, and consume queues
  * 1) Creates a connection to rabbitmq
  * 2) Creates a consumer channel and publisher channel
  * 3) Begins consuming queues
+ * 4) Optionally creates a process for each queue consumer using node clustering (see "Clustering" below)
 
 ```
 /**
@@ -459,6 +460,10 @@ http://www.squaremobius.net/amqp.node/channel_api.html#channel
 ## Connection
 see amqplib connection documentation
 http://www.squaremobius.net/amqp.node/channel_api.html#connect
+
+## Clustering
+By default, coworkers will use clustering to give each queue consumer it's own process
+
 
 # License
 MIT

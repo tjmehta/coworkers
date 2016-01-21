@@ -12,6 +12,7 @@ const lab = exports.lab = Lab.script()
 const describe = lab.describe
 const it = lab.it
 const beforeEach = lab.beforeEach
+const afterEach = lab.afterEach
 const expect = Code.expect
 
 describe('ClusterManager', function () {
@@ -26,6 +27,7 @@ describe('ClusterManager', function () {
         sinon.spy(worker, 'once')
         sinon.spy(worker, 'removeListener')
         worker.send = sinon.stub().yieldsAsync()
+        worker.process = { pid: 1 }
         ctx.workersCreated.push(worker)
         return worker
       })
@@ -161,15 +163,23 @@ describe('ClusterManager', function () {
       ctx.queueName = 'queue-name'
       ctx.worker = {
         __queueName: ctx.queueName,
-        __queueWorkerNum: 1
+        __queueWorkerNum: 1,
+        removeListener: sinon.stub()
       }
       done()
     })
 
-    it('should re-create the worker', function (done) {
-      ctx.ClusterManager.respawnWorker.call(ctx.worker, 1, 'SIGINT')
+    it('should re-create the worker if not killed by SIGINT', function (done) {
+      ctx.ClusterManager.respawnWorker.call(ctx.worker, 1)
       sinon.assert.calledOnce(ctx.ClusterManager.fork)
       sinon.assert.calledWith(ctx.ClusterManager.fork, ctx.queueName)
+      done()
+    })
+
+    it('should NOT re-create the worker if killed by SIGINT', function (done) {
+      ctx.ClusterManager.respawnWorker.call(ctx.worker, 1, 'SIGINT')
+      sinon.assert.calledOnce(ctx.worker.removeListener)
+      sinon.assert.calledWith(ctx.worker.removeListener, 'exit', ctx.ClusterManager.respawnWorker)
       done()
     })
   })
@@ -182,7 +192,7 @@ describe('ClusterManager', function () {
         __queueName: ctx.queueName,
         __queueWorkerNum: 1,
         removeListener: sinon.stub(),
-        send: sinon.stub()
+        kill: sinon.stub()
       }
       done()
     })
@@ -198,11 +208,8 @@ describe('ClusterManager', function () {
         const promise = ctx.ClusterManager.stopWorker(ctx.worker)
         expect(promise).to.be.an.instanceOf(Promise)
         promise.then(function () {
-          sinon.assert.calledOnce(ctx.worker.removeListener)
-          sinon.assert.calledWith(
-            ctx.worker.removeListener, 'exit', ctx.ClusterManager.respawnWorker)
-          sinon.assert.calledOnce(ctx.worker.send)
-          sinon.assert.calledWith(ctx.worker.send, 'shutdown')
+          sinon.assert.calledOnce(ctx.worker.kill)
+          sinon.assert.calledWith(ctx.worker.kill, 'SIGINT')
           done()
         }).catch(done)
       })
@@ -223,13 +230,10 @@ describe('ClusterManager', function () {
           done(new Error('expected an error'))
         }).catch(function (err) {
           expect(err).to.equal(ctx.err)
-          sinon.assert.calledOnce(ctx.worker.removeListener)
-          sinon.assert.calledWith(
-            ctx.worker.removeListener, 'exit', ctx.ClusterManager.respawnWorker)
-          sinon.assert.calledOnce(ctx.worker.send)
-          sinon.assert.calledWith(ctx.worker.send, 'shutdown')
+          sinon.assert.calledOnce(ctx.worker.kill)
+          sinon.assert.calledWith(ctx.worker.kill, 'SIGINT')
           done()
-        })
+        }).catch(done)
       })
     })
   })
@@ -286,6 +290,27 @@ describe('ClusterManager', function () {
       })
 
       describe('stopped', function () {
+        describe('COWORKERS_WORKERS_PER_QUEUE exists', function () {
+          beforeEach(function (done) {
+            ctx.os.cpus.returns([{ /* cpu1 */}, { /* cpu2 */}])
+            process.env.COWORKERS_WORKERS_PER_QUEUE = 1
+            sinon.stub(ctx.ClusterManager, 'fork')
+            done()
+          })
+          afterEach(function (done) {
+            delete process.env.COWORKERS_WORKERS_PER_QUEUE
+            done()
+          })
+
+          it('should fork 2 consumers for "queue-name"', function (done) {
+            ctx.clusterManager.start().then(function () {
+              sinon.assert.calledOnce(ctx.ClusterManager.fork)
+              sinon.assert.calledWith(ctx.ClusterManager.fork, ctx.queueName)
+              done()
+            }).catch(done)
+          })
+        })
+
         describe('numCPUs > numQueues', function () {
           beforeEach(function (done) {
             ctx.os.cpus.returns([{ /* cpu1 */}, { /* cpu2 */}])

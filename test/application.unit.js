@@ -38,6 +38,13 @@ describe('Application', function () {
   // tests
   beforeEach(function (done) {
     ctx = {}
+    sinon.stub(process, 'on')
+    sinon.stub(process, 'removeListener')
+    done()
+  })
+  afterEach(function (done) {
+    process.on.restore()
+    process.removeListener.restore()
     done()
   })
 
@@ -109,6 +116,10 @@ describe('Application', function () {
         describe('COWORKERS_QUEUE', function () {
           beforeEach(function (done) {
             process.env.COWORKERS_QUEUE = 'queue-name'
+            // use proxyquire to cover debug.js
+            ctx.Application = proxyquire('../lib/application.js', {
+              'co': require('co')
+            })
             done()
           })
           afterEach(function (done) {
@@ -118,7 +129,7 @@ describe('Application', function () {
           })
 
           it('should default to process.env.COWORKERS_QUEUE', function (done) {
-            const app = new Application({ cluster: false })
+            const app = new ctx.Application({ cluster: false })
             expect(app.queueName).to.equal(process.env.COWORKERS_QUEUE)
             done()
           })
@@ -143,6 +154,7 @@ describe('Application', function () {
 
       it('should accept a generator', function (done) {
         ctx.app.use(function * () {})
+        ctx.app.use(function * foo () {})
         done()
       })
     })
@@ -225,7 +237,7 @@ describe('Application', function () {
           done()
         })
         it('should setup queue for consumption w/ no opts', function (done) {
-          ctx.app.queue('queue-name', function * () {})
+          ctx.app.queue('queue-name', function * foo () {})
           // test queueNames for coverage
           expect(ctx.app.queueNames).deep.equal(['queue-name'])
           done()
@@ -238,6 +250,12 @@ describe('Application', function () {
         })
         it('should setup queue for consumption w/ queueOpts and consumeOpts', function (done) {
           ctx.app.queue('queue-name', {}, {}, function * () {})
+          // test queueNames for coverage
+          expect(ctx.app.queueNames).deep.equal(['queue-name'])
+          done()
+        })
+        it('should setup queue for consumption w/ multiple middlewares', function (done) {
+          ctx.app.queue('queue-name', function * () {}, function * () {})
           // test queueNames for coverage
           expect(ctx.app.queueNames).deep.equal(['queue-name'])
           done()
@@ -477,6 +495,7 @@ describe('Application', function () {
             ctx.app = new Application({ cluster: true, queueName: ctx.queueName })
             ctx.app.on('error', function () {})
             ctx.app.queue(ctx.queueName, function * () {})
+            sinon.stub(ctx.app, 'close')
             done()
           })
           afterEach(function (done) {
@@ -491,12 +510,56 @@ describe('Application', function () {
               expect(ctx.app.connectingPromise).to.equal(promise)
               promise.then(function () {
                 expect(ctx.app.connectingPromise).to.not.exist()
+                sinon.assert.calledOnce(ctx.createAppConnectionStub)
+                sinon.assert.calledWith(ctx.createAppConnectionStub, ctx.app, ctx.url, ctx.socketOptions)
+                sinon.assert.calledTwice(ctx.createAppChannelStub)
+                sinon.assert.calledWith(ctx.createAppChannelStub, ctx.app, 'consumerChannel')
+                sinon.assert.calledWith(ctx.createAppChannelStub, ctx.app, 'publisherChannel')
+                sinon.assert.calledOnce(ctx.assertAndConsumeAppQueue)
+                sinon.assert.calledWith(ctx.assertAndConsumeAppQueue, ctx.app, ctx.queueName)
+                sinon.assert.calledOnce(process.on)
+                sinon.assert.calledWith(process.on, 'SIGINT', ctx.app.sigintHandler)
+                sinon.assert.notCalled(ctx.app.close)
+                ctx.app.sigintHandler()
+                sinon.assert.calledOnce(ctx.app.close)
                 done()
               }).catch(done)
               // resolve all connect's promises
               ctx.createAppConnectionStub.resolve()
               ctx.createAppChannelStub.resolve()
               ctx.assertAndConsumeAppQueue.resolve()
+            })
+
+            describe('COWORKERS_RABBITMQ_URL', function () {
+              beforeEach(function (done) {
+                ctx.url = process.env.COWORKERS_RABBITMQ_URL = 'amqp://foobar:8080'
+                process.env.COWORKERS_QUEUE_WORKER_NUM = 1
+                proxyquire('../lib/application.js', { // coverage
+                  './cluster-manager.js': ctx.ClusterManager
+                })
+                done()
+              })
+              afterEach(function (done) {
+                delete process.env.COWORKERS_RABBITMQ_URL
+                delete process.env.COWORKERS_QUEUE_WORKER_NUM
+                done()
+              })
+
+              it('should default to env', function (done) {
+                const promise = ctx.app.connect(ctx.socketOptions)
+                expect(ctx.app.connectingPromise).to.equal(promise)
+                promise.then(function () {
+                  expect(ctx.app.connectingPromise).to.not.exist()
+                  sinon.assert.calledOnce(ctx.createAppConnectionStub)
+                  sinon.assert.calledWith(ctx.createAppConnectionStub, ctx.app, ctx.url, ctx.socketOptions)
+                  // ...
+                  done()
+                }).catch(done)
+                // resolve all connect's promises
+                ctx.createAppConnectionStub.resolve()
+                ctx.createAppChannelStub.resolve()
+                ctx.assertAndConsumeAppQueue.resolve()
+              })
             })
           })
 
@@ -506,7 +569,7 @@ describe('Application', function () {
               ctx.app.consumerChannel = {}
               ctx.app.publisherChannel = {}
               ctx.app.consumerTag = 0 // consumeTag can be user specified to be falsy
-              ctx.app.processMessageHandler = function () {}
+              ctx.app.sigintHandler = function () {}
               done()
             })
 
@@ -704,7 +767,8 @@ describe('Application', function () {
             ctx.app.consumerTag = 0
             ctx.app.producerChannel = { close: sinon.stub() }
             ctx.app.connection = { close: sinon.stub() }
-            ctx.app.processMessageHandler = function () {}
+            ctx.sigintHandler = function () {}
+            ctx.app.sigintHandler = ctx.sigintHandler
             done()
           })
 
@@ -719,6 +783,8 @@ describe('Application', function () {
               sinon.assert.calledOnce(ctx.app.consumerChannel.close)
               sinon.assert.calledOnce(ctx.app.producerChannel.close)
               sinon.assert.calledOnce(ctx.app.connection.close)
+              sinon.assert.calledOnce(process.removeListener)
+              sinon.assert.calledWith(process.removeListener, 'SIGINT', ctx.sigintHandler)
               done()
             }).catch(done)
           })
