@@ -1,7 +1,7 @@
 ![coworkers](http://i.imgur.com/WUEcl4e.png)
 ===
 
-[![Build Status](https://travis-ci.org/tjmehta/coworkers.svg?branch=master)](https://travis-ci.org/tjmehta/coworkers)
+[![Build Status](https://travis-ci.org/tjmehta/coworkers.svg?branch=master)](https://travis-ci.org/tjmehta/coworkers) [![Coverage Status](https://coveralls.io/repos/github/tjmehta/coworkers/badge.svg?branch=master)](https://coveralls.io/github/tjmehta/coworkers?branch=master)
 
 Coworkers is a RabbitMQ microservice framework
 
