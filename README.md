@@ -461,9 +461,61 @@ http://www.squaremobius.net/amqp.node/channel_api.html#channel
 see amqplib connection documentation
 http://www.squaremobius.net/amqp.node/channel_api.html#connect
 
-## Clustering
-By default, coworkers will use clustering to give each queue consumer it's own process
+## Clustering / Process management
+By default, coworkers will use clustering to give each queue consumer it's own process.
+Clustering is not required, you can manage coworker processes manually (see "Manual process management" below).
 
+##### Clustering example:
+
+When clustering is enabled, Coworkers will optimize the number of processes to the number of cpus the server has. The below example will will create four workers in total (to match the number of cpus): two "foo-queue" consumers, and two "bar-queue" consumers. If the number of queues > num cpus, coworkers will only create one consumer per queue. If you want to specify the number of workers per queue you can do this using the environment variable: `COWORKERS_NUM_WORKERS_PER_QUEUE`. If you have any problems w/ a particular worker process you can close it by sending it a `SIGINT` signal, this will gracefully shutdown the process and not respawn a replacement (to restart the worker after stopping it, restart your coworkers app).
+
+```js
+// app.js
+const app = require('coworkers')()
+require('os').cpus().length // 4
+
+app.queue('foo-queue', ...)
+app.queue('bar-queue', ...)
+
+app.on('error', ...)
+
+app.connect(function (err) {
+  if (err) console.error(err.stack)
+})
+```
+
+##### Manual process management:
+
+Coworkers forces you to only consume a single queue per process, so that your consumers are decoupled. If you want to manage your own processes w/out using clustering all you have to do is specify three environment variables:
+```bash
+COWORKERS_CLUSTER="false" # {string-boolean} disabled clustering
+COWORKERS_QUEUE="foo-queue" # {string} specify the queue the process will consume
+COWORKERS_QUEUE_WORKER_NUM=1 # {number} specify the queue worker number, optional, default: 1
+  # if you create multiple processes per queue, this unique id per queue
+
+```
+```js
+// app.js
+// ...
+app.use('foo-queue', ...)
+app.use('bar-queue', ...)
+
+module.exports = app
+```
+```js
+// process-manager.js
+var app = require('app')()
+
+// create one consumer process per queue
+app.queueNames.forEach(function (queueName) {
+  // create node process w/ env:
+  // COWORKERS_CLUSTER="false"
+  // COWORKERS_QUEUE=queueName
+  // COWORKERS_QUEUE_WORKER_NUM=1
+  // ...
+})
+//...
+```
 
 # License
 MIT

@@ -533,10 +533,11 @@ describe('Application', function () {
             describe('COWORKERS_RABBITMQ_URL', function () {
               beforeEach(function (done) {
                 ctx.url = process.env.COWORKERS_RABBITMQ_URL = 'amqp://foobar:8080'
-                process.env.COWORKERS_QUEUE_WORKER_NUM = 1
-                proxyquire('../lib/application.js', { // coverage
+                process.env.COWORKERS_QUEUE_WORKER_NUM = 100
+                //coverage
+                proxyquire('../lib/application.js', {
                   './cluster-manager.js': ctx.ClusterManager
-                })
+                })({ queueName: 'foo' })
                 done()
               })
               afterEach(function (done) {
