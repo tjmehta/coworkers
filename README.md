@@ -245,26 +245,26 @@ const app = require('coworkers')()
 app.consume('foo-queue', function * () {/*...*/})
 
 // promise api
-connect() // connects to 'amqp://127.0.0.1:5678' by default, returns promise
+app.connect() // connects to 'amqp://127.0.0.1:5678' by default, returns promise
   .then(...)
   .catch(...)
 // - or -
-connect('amqp://127.0.0.1:8000') // returns promise
+app.connect('amqp://127.0.0.1:8000') // returns promise
   .then(...)
   .catch(...)
 // - or -
 const socketOptions = {} // see http://www.squaremobius.net/amqp.node/channel_api.html#connect
-connect('amqp://127.0.0.1:8000', socketOptions) // returns promise
+app.connect('amqp://127.0.0.1:8000', socketOptions) // returns promise
   .then(...)
   .catch(...)
 
 // callback api
-connect(callback) // connects to 'amqp://127.0.0.1:5678' by default
+app.connect(callback) // connects to 'amqp://127.0.0.1:5678' by default
 // - or -
-connect('amqp://127.0.0.1:8000', callback)
+app.connect('amqp://127.0.0.1:8000', callback)
 // - or -
 const socketOptions = {} // see http://www.squaremobius.net/amqp.node/channel_api.html#connect
-connect('amqp://127.0.0.1:8000', socketOptions, callback)
+app.connect('amqp://127.0.0.1:8000', socketOptions, callback)
 // callback
 function callback (err) {
   // ...
