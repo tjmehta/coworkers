@@ -187,6 +187,7 @@ By default, app handles all errors by logging them and nacking messages
 
 ### Middleware Error Handling
 A coworkers application will not start w/out an error handler. Middleware errors are emitted on the app. To setup error-handling logic such as centralized logging you can add an "error" event listener.
+
 ##### Simple error handler example:
 ```js
 app.on('error', function (err, context) {
@@ -194,6 +195,7 @@ app.on('error', function (err, context) {
 })
 ```
 For special error-handling behavior make use of the properties available on `context`. Also, make sure to handle errors that can occur in the error handler (they will not be caught).
+
 ##### Robust error handler example:
 ```js
 app.on('error', function (err, context) {
@@ -270,6 +272,7 @@ function callback (err) {
   // ...
 }
 ```
+
 ##### Failed connect examples:
 ```js
 const app = require('coworkers')()
@@ -336,6 +339,7 @@ These special ack properties should be used in place of channel calls (except in
 * this.ack - set this property to ack the message at the end of the middlewares
 * this.nack - set this property to nack the message at the end of the middlewares
 * this.reject - set this property to reject the message at the end of the middlewares
+
 ##### Ack Example:
 ```js
 app.use(function * () {
@@ -360,6 +364,7 @@ app.use(function * () {
 * this.sendToQueue(...) - publish a message directly to a queue on the publisherChannel
 * this.request(...) - publish an rpc message, and easily recieve it's reply, creates a new channel for publishing and consuming
 * this.reply(...) - reply to an rpc message on the publisherChannel
+
 ##### Publish example:
 ```js
 // `context.publish` jsdoc:
