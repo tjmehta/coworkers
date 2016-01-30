@@ -37,10 +37,12 @@
     "co": "^4.6.0",
     "debug": "^2.2.0",
     "ee-first": "^1.1.1",
+    "first-event": "^1.0.0",
     "is-generator": "^1.0.2",
     "koa-compose": "^2.3.0",
     "nodeify": "^1.0.0",
     "object-values": "^1.0.0",
+    "promise-retry": "^1.0.2",
     "times-loop": "^1.0.0",
     "uuid": "^2.0.1"
   },

@@ -4,6 +4,7 @@ const cluster = require('cluster')
 
 const Code = require('code')
 const Lab = require('lab')
+const last = require('101/last')
 const proxyquire = require('proxyquire')
 const RabbitSchema = require('rabbitmq-schema')
 const sinon = require('sinon')
@@ -448,7 +449,7 @@ describe('Application', function () {
                 expect(ctx.app.closingPromise).to.not.exist() // deleted by closing promise mock
                 expect(ctx.app.connectingPromise).to.not.exist()
                 sinon.assert.notCalled(ctx.app.connect)
-                expect(err.message).to.equal('Connect cancelled because pending close failed (closeErr)')
+                expect(err.message).to.equal('Connect cancelled because pending close failed (.closeErr)')
                 expect(err.closeErr).to.equal(ctx.err)
                 done()
               }).catch(done)
@@ -483,9 +484,9 @@ describe('Application', function () {
             ctx.app.queueName = ctx.queueName
             cluster.isMaster = false
             cluster.isWorker = true
-            ctx.createAppConnectionStub = sinonPromiseStub()
-            ctx.createAppChannelStub = sinonPromiseStub()
-            ctx.assertAndConsumeAppQueue = sinonPromiseStub()
+            ctx.createAppConnectionStub = sinonPromiseStub().resolves()
+            ctx.createAppChannelStub = sinonPromiseStub().resolves()
+            ctx.assertAndConsumeAppQueue = sinonPromiseStub().resolves()
             const Application = proxyquire('../lib/application.js', {
               './cluster-manager.js': ctx.ClusterManager,
               './rabbit-utils/create-app-connection.js': ctx.createAppConnectionStub,
@@ -495,43 +496,63 @@ describe('Application', function () {
             ctx.app = new Application({ cluster: true, queueName: ctx.queueName })
             ctx.app.on('error', function () {})
             ctx.app.queue(ctx.queueName, function * () {})
-            sinon.stub(ctx.app, 'close')
+            process.send = sinon.stub()
             done()
           })
           afterEach(function (done) {
             cluster.isMaster = true
             cluster.isWorker = false
+            delete process.send
             done()
           })
 
           describe('while closed', function () {
-            it('should connect, create channels, and consume queues', function (done) {
-              const promise = ctx.app.connect(ctx.url, ctx.socketOptions)
-              expect(ctx.app.connectingPromise).to.equal(promise)
-              promise.then(function () {
-                expect(ctx.app.connectingPromise).to.not.exist()
-                sinon.assert.calledOnce(ctx.createAppConnectionStub)
-                sinon.assert.calledWith(ctx.createAppConnectionStub, ctx.app, ctx.url, ctx.socketOptions)
-                sinon.assert.calledTwice(ctx.createAppChannelStub)
-                sinon.assert.calledWith(ctx.createAppChannelStub, ctx.app, 'consumerChannel')
-                sinon.assert.calledWith(ctx.createAppChannelStub, ctx.app, 'publisherChannel')
-                sinon.assert.calledOnce(ctx.assertAndConsumeAppQueue)
-                sinon.assert.calledWith(ctx.assertAndConsumeAppQueue, ctx.app, ctx.queueName)
-                sinon.assert.calledOnce(process.on)
-                sinon.assert.calledWith(process.on, 'SIGINT', ctx.app.sigintHandler)
-                sinon.assert.notCalled(ctx.app.close)
-                ctx.app.sigintHandler()
-                sinon.assert.calledOnce(ctx.app.close)
+            describe('success and test sigint', function() {
+              beforeEach(function (done) {
+                ctx.err = new Error('boom')
+                sinon.stub(ctx.app, 'close').rejects(ctx.err)
                 done()
-              }).catch(done)
-              // resolve all connect's promises
-              ctx.createAppConnectionStub.resolve()
-              ctx.createAppChannelStub.resolve()
-              ctx.assertAndConsumeAppQueue.resolve()
+              })
+              afterEach(function (done) {
+                process.nextTick.restore && process.nextTick.restore()
+                done()
+              })
+
+              it('should connect, create channels, and consume queues', function (done) {
+                const promise = ctx.app.connect(ctx.url, ctx.socketOptions)
+                expect(ctx.app.connectingPromise).to.equal(promise)
+                promise.then(function () {
+                  expect(ctx.app.connectingPromise).to.not.exist()
+                  sinon.assert.calledOnce(ctx.createAppConnectionStub)
+                  sinon.assert.calledWith(ctx.createAppConnectionStub, ctx.app, ctx.url, ctx.socketOptions)
+                  sinon.assert.calledTwice(ctx.createAppChannelStub)
+                  sinon.assert.calledWith(ctx.createAppChannelStub, ctx.app, 'consumerChannel')
+                  sinon.assert.calledWith(ctx.createAppChannelStub, ctx.app, 'publisherChannel')
+                  sinon.assert.calledOnce(ctx.assertAndConsumeAppQueue)
+                  sinon.assert.calledWith(ctx.assertAndConsumeAppQueue, ctx.app, ctx.queueName)
+                  sinon.assert.calledOnce(process.on)
+                  sinon.assert.calledWith(process.on, 'SIGINT', ctx.app.sigintHandler)
+                  sinon.assert.notCalled(ctx.app.close)
+                  sinon.assert.calledOnce(process.send)
+                  sinon.assert.calledWith(process.send, {
+                    coworkersEvent: 'coworkers:connect'
+                  })
+                  // test siginthandler
+                  sinon.stub(process, 'nextTick')
+                  ctx.app.sigintHandler()
+                    .then(function () {
+                      sinon.assert.calledOnce(ctx.app.close)
+                      const nextTickCb = last(process.nextTick.args)[0]
+                      expect(nextTickCb).to.throw(ctx.err.message)
+                      done()
+                    }).catch(done)
+                }).catch(done)
+              })
             })
 
             describe('COWORKERS_RABBITMQ_URL', function () {
               beforeEach(function (done) {
+                sinon.stub(ctx.app, 'close').resolves()
                 ctx.url = process.env.COWORKERS_RABBITMQ_URL = 'amqp://foobar:8080'
                 process.env.COWORKERS_QUEUE_WORKER_NUM = 100
                 //coverage
@@ -556,16 +577,13 @@ describe('Application', function () {
                   // ...
                   done()
                 }).catch(done)
-                // resolve all connect's promises
-                ctx.createAppConnectionStub.resolve()
-                ctx.createAppChannelStub.resolve()
-                ctx.assertAndConsumeAppQueue.resolve()
               })
             })
           })
 
           describe('while already connected', function () {
             beforeEach(function (done) {
+              sinon.stub(ctx.app, 'close').resolves()
               ctx.app.connection = {}
               ctx.app.consumerChannel = {}
               ctx.app.publisherChannel = {}
@@ -613,19 +631,32 @@ describe('Application', function () {
           })
 
           describe('connect errors', function () {
-            it('should call close if connect fails', function (done) {
-              const err = new Error('boom')
-              const promise = ctx.app.connect(ctx.url, ctx.socketOptions)
-              expect(ctx.app.connectingPromise).to.equal(promise)
-              sinon.stub(ctx.app, 'close').resolves()
-              promise.catch(function (connErr) {
-                expect(ctx.app.connectingPromise).to.not.exist()
-                sinon.assert.calledOnce(ctx.app.close)
-                expect(connErr).to.equal(err)
+            describe('has process.send', function() {
+              beforeEach(function (done) {
+                process.send = sinon.stub()
                 done()
               })
-              // cause connect error
-              ctx.createAppConnectionStub.reject(err)
+              afterEach(function (done) {
+                delete process.send
+                done()
+              })
+
+              it('should call close if connect fails', function (done) {
+                const err = new Error('boom')
+                const promise = ctx.app.connect(ctx.url, ctx.socketOptions)
+                expect(ctx.app.connectingPromise).to.equal(promise)
+                sinon.stub(ctx.app, 'close').resolves()
+                promise.catch(function (connErr) {
+                  expect(ctx.app.connectingPromise).to.not.exist()
+                  sinon.assert.calledOnce(ctx.app.close)
+                  expect(connErr).to.equal(err)
+                  sinon.assert.calledOnce(process.send)
+                  sinon.assert.calledWith(process.send, { coworkersEvent: 'coworkers:connect:error' })
+                  done()
+                })
+                // cause connect error
+                ctx.createAppConnectionStub.reject(err)
+              })
             })
 
             it('should ignore close err if connect fails and close fails', function (done) {
@@ -716,7 +747,7 @@ describe('Application', function () {
             promise.catch(function (err) {
               expect(ctx.app.connectingPromise).to.not.exist() // deleted by mock connecting promise
               expect(ctx.app.closingPromise).to.not.exist()
-              expect(err.message).to.equal('Close cancelled because pending connect failed (closeErr)')
+              expect(err.message).to.equal('Close cancelled because pending connect failed (.closeErr)')
               expect(err.connectErr).to.equal(ctx.err)
               sinon.assert.notCalled(ctx.app.close)
               done()
@@ -770,6 +801,11 @@ describe('Application', function () {
             ctx.app.connection = { close: sinon.stub() }
             ctx.sigintHandler = function () {}
             ctx.app.sigintHandler = ctx.sigintHandler
+            process.send = sinon.stub()
+            done()
+          })
+          afterEach(function (done) {
+            delete process.send
             done()
           })
 
@@ -786,6 +822,8 @@ describe('Application', function () {
               sinon.assert.calledOnce(ctx.app.connection.close)
               sinon.assert.calledOnce(process.removeListener)
               sinon.assert.calledWith(process.removeListener, 'SIGINT', ctx.sigintHandler)
+              sinon.assert.calledOnce(process.send)
+              sinon.assert.calledWith(process.send, { coworkersEvent: 'coworkers:close' })
               done()
             }).catch(done)
           })
@@ -801,6 +839,26 @@ describe('Application', function () {
               done()
             }).catch(done)
           })
+
+          describe('without process.send', function () {
+            // gotta love coverage...
+            beforeEach(function (done) {
+              delete process.send
+              done()
+            })
+
+            it('should throw error if close fails', function (done) {
+              ctx.err = new Error('boom')
+              ctx.app.consumerChannel.close.rejects(ctx.err)
+              const promise = ctx.app.close()
+              expect(promise).to.equal(ctx.app.closingPromise)
+              promise.catch(function (err) {
+                expect(ctx.app.closingPromise).to.not.exist()
+                expect(err).to.equal(ctx.err)
+                done()
+              }).catch(done)
+            })
+          });
         })
       })
     })

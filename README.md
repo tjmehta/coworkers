@@ -229,8 +229,8 @@ Connect to RabbitMQ, create channels, and consume queues
  * 1) Creates a connection to rabbitmq
  * 2) Creates a consumer channel and publisher channel
  * 3) Begins consuming queues
- * 4) Optionally creates a process for each queue consumer using node clustering (see "Clustering" below)
-
+ * Note on Clustering:
+    If using clustering and isMaster, it will create all workers and wait for them to connect to RabbitMQ. If any of the workers fail to connect to Rabbitmq they will cause master's connect to error.
 ```
 /**
  * @param {String} [url] rabbitmq connection url, default: 'amqp://127.0.0.1:5672'
@@ -471,7 +471,14 @@ http://www.squaremobius.net/amqp.node/channel_api.html#connect
 
 ## Clustering / Process management
 By default, coworkers will use clustering to give each queue consumer it's own process.
-Clustering is not required, you can manage coworker processes manually (see "Manual process management" below).
+Clustering is optional, you can manage coworker processes manually (see "Manual process management" below).
+
+Clustering is opinionated, it make the processes work as a unit:
+
+ * If a worker fails to startup and connect to rabbitmq, it will kill all the workers
+ * If a workers dies it will be attempted to be respawned w/ exponential backoff
+    * Use the following ENV variables to adjust behavior: `COWORKERS_RESPAWN_RETRY_ATTEMPTS`, `COWORKERS_RESPAWN_RETRY_MIN_TIMEOUT`, `COWORKERS_RESPAWN_RETRY_FACTOR`
+ * If a worker dies and repeatedly fails to create process and connect to rabbitmq it will crash the entire cluster
 
 ##### Clustering example:
 
@@ -495,6 +502,11 @@ app.connect(function (err) {
 ##### Manual process management:
 
 Coworkers forces you to only consume a single queue per process, so that your consumers are decoupled. If you want to manage your own processes w/out using clustering all you have to do is specify three environment variables:
+
+Processes will send process [messages](https://nodejs.org/docs/latest/api/child_process.html#child_process_child_send_message_sendhandle_callback) so that you can determine the state:
+
+ * messages include: 'coworkers:connect', 'coworkers:connect:error', 'coworkers:close', 'coworkers:close:error'
+
 ```bash
 COWORKERS_CLUSTER="false" # {string-boolean} disabled clustering
 COWORKERS_QUEUE="foo-queue" # {string} specify the queue the process will consume
