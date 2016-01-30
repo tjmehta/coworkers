@@ -1,6 +1,6 @@
 {
   "name": "coworkers",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "RabbitMQ consumer service framework",
   "main": "index.js",
   "scripts": {
