@@ -1,10 +1,14 @@
+# 0.2.2
+Application:
+  * Remove close/exit handlers before closing rabbit connection and channels in `close`
+
 # 0.2.1
 ClusterManager:
   * Propagate process.env to workers
 
 # 0.2.0
 Application:
-  *Sends process messages for connect and close states (useful for process management)
+  * Sends process messages for connect and close states (useful for process management)
     * 'coworkers:connect', 'coworkers:connect:error', 'coworkers:close', 'coworkers:close:error'
   * SIGINT handler now throws uncaught exception if graceful shutdown fails
   * When using clustering master process `connect` will wait for all workers to connect to rabbitmq
