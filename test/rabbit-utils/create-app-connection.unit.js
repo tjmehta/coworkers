@@ -79,15 +79,14 @@ describe('RabbitUtils - createAppConnection', function () {
         .then(function () {
           sinon.spy(ctx.app, 'emit')
           expect(ctx.app.connection).to.exist(ctx.mockConnection)
-          ctx.mockConnection.emit('close', ctx.mockConnection)
+          expect(function () {
+            ctx.mockConnection.emit('close')
+          }).to.throw('"app.connection" unexpectedly closed')
           // assert closeHandler called
           sinon.assert.calledOnce(ctx.closeHandler)
-          sinon.assert.calledWith(ctx.closeHandler, ctx.app, ctx.mockConnection)
+          sinon.assert.calledWith(ctx.closeHandler, ctx.app)
           // assert connection deleted
           expect(ctx.app.connection).to.not.exist()
-          // assert app emits connection:close
-          sinon.assert.calledOnce(ctx.app.emit)
-          sinon.assert.calledWith(ctx.app.emit, 'connection:close')
           done()
         }).catch(done)
     })
@@ -109,15 +108,15 @@ describe('RabbitUtils - createAppConnection', function () {
         .then(function () {
           sinon.spy(ctx.app, 'emit')
           expect(ctx.app.connection).to.exist(ctx.mockConnection)
-          ctx.mockConnection.emit('error', ctx.mockConnection)
+          ctx.err = new Error('boom')
+          expect(function () {
+            ctx.mockConnection.emit('error', ctx.err)
+          }).to.throw('"app.connection" unexpectedly errored: '+ctx.err.message)
           // assert errorHandler called
           sinon.assert.calledOnce(ctx.errorHandler)
-          sinon.assert.calledWith(ctx.errorHandler, ctx.app, ctx.mockConnection)
+          sinon.assert.calledWith(ctx.errorHandler, ctx.app, ctx.err)
           // assert connection deleted
           expect(ctx.app.connection).to.not.exist()
-          // assert app emits connection:error
-          sinon.assert.calledOnce(ctx.app.emit)
-          sinon.assert.calledWith(ctx.app.emit, 'connection:error')
           done()
         }).catch(done)
     })

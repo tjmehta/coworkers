@@ -105,11 +105,13 @@ describe('RabbitUtils - createAppChannel', function () {
       createAppChannel(ctx.app, 'consumerChannel')
         .then(function () {
           expect(ctx.app.consumerChannel).to.equal(ctx.consumerChannel)
-          ctx.consumerChannel.emit('close', ctx.consumerChannel)
+          expect(function () {
+            ctx.consumerChannel.emit('close')
+          }).to.throw('"app.consumerChannel" unexpectedly closed')
           sinon.assert.calledOnce(createAppChannel.closeHandler)
           sinon.assert.calledWith(
             createAppChannel.closeHandler,
-            ctx.app, 'consumerChannel', ctx.consumerChannel)
+            ctx.app, 'consumerChannel')
           expect(ctx.app.consumerChannel).to.not.exist()
           done()
         }).catch(done)
@@ -132,11 +134,13 @@ describe('RabbitUtils - createAppChannel', function () {
         .then(function () {
           expect(ctx.app.consumerChannel).to.equal(ctx.consumerChannel)
           ctx.err = new Error('boom')
-          ctx.consumerChannel.emit('error', ctx.err, ctx.consumerChannel)
+          expect(function () {
+            ctx.consumerChannel.emit('error', ctx.err)
+          }).to.throw('"app.consumerChannel" unexpectedly errored: '+ctx.err.message)
           sinon.assert.calledOnce(createAppChannel.errorHandler)
           sinon.assert.calledWith(
             createAppChannel.errorHandler,
-            ctx.app, 'consumerChannel', ctx.err, ctx.consumerChannel)
+            ctx.app, 'consumerChannel', ctx.err)
           expect(ctx.app.consumerChannel).to.not.exist()
           done()
         }).catch(done)
