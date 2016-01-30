@@ -5,12 +5,13 @@
 
 Coworkers is a RabbitMQ microservice framework
 
-Coworkers is a new microservice framework heavily inspired by Koa, which aims to be a simple, robust, and scalable foundation for creating RabbitMQ microservices. Through leveraging generators Coworkers allows you to ditch callbacks and greatly increase error-handling. Coworkers also uses Amqplib, a battle-tested AMQP client, under the hood to communicate with RabbitMQ and has best-practices baked in. Finally, Coworkers enables easy scalability by running each queue-consumer in it's own process through node clustering (optional).
+Coworkers is a new microservice framework heavily inspired by [Koa](https://github.com/koajs/koa), which aims to be a simple, robust, and scalable foundation for creating RabbitMQ microservices. Through leveraging generators Coworkers allows you to ditch callbacks and greatly increase error-handling. Coworkers also uses [Amqplib](https://github.com/squaremo/amqp.node), a battle-tested AMQP client, under the hood to communicate with RabbitMQ and has best-practices baked in. Finally, Coworkers enables easy scalability by running each queue-consumer in it's own process through node clustering (optional).
 
 # Installation
 ```bash
 npm install --save coworkers
 ```
+Note: `amqplib` is a peer dependency. This give you flexibility in using any compatible version you please. npm@^3 does not install peer dependencies automatically, so you will have to install `amqplib` yourself.
 
 # Usage
 
@@ -96,15 +97,20 @@ const coworkers = require('coworkers')
 
 // using optional schema
 const app = coworkers(schema)
+// add required error handler
+app.on('error', function (err) {
+  console.error(err.stack)
+})
+// setup a queue
 const queueOpts = {/* queue options */}
 const consumeOpts = {/* consume options */}
 // correct usage: (note that consumeOpts becomes the second arg)
 app.queue('queue0', consumeOpts, function * () {})
 // errors
 app.queue('queue0', queueOpts, consumeOpts, function * () {})
-// Error: 'app.consume() cannot use "queueOpts" when using a schema'
+// Error: 'app.queue() cannot use "queueOpts" when using a schema'
 app.queue('queue1', queueOpts, consumeOpts, function * () {})
-// Error: 'app.consume() requires "queue1" queue to exist in schema'
+// Error: 'app.queue() requires "queue1" queue to exist in schema'
 ```
 
 ##### app.queue example when using rabbitmq-schema
@@ -129,16 +135,21 @@ const schema = new RabbitSchema({
 
 // using optional schema
 const app = coworkers(schema)
+// add required error handler
+app.on('error', function (err) {
+  console.error(err.stack)
+})
+// setup a queue
 const consumeOpts = {/* consume options */}
 // correct usage: (note that consumeOpts becomes the second arg)
 app.queue('queue0', consumeOpts, function * () {})
 // errors
 const queueOpts = {/* queue options */}
 app.queue('queue0', queueOpts, consumeOpts, function * () {})
-// Error: 'app.consume() cannot use "queueOpts" when using a schema'
+// Error: 'app.queue() cannot use "queueOpts" when using a schema'
 // (It will use the queueOpts from the schema)
 app.queue('queue1', consumeOpts, function * () {})
-// Error: 'app.consume() requires "queue1" queue to exist in schema'
+// Error: 'app.queue() requires "queue1" queue to exist in schema'
 ```
 
 See "Cascading middleware" section (below) for a full example
@@ -177,7 +188,7 @@ app.use(function * (next) {
 /* queue consumers w/ middlewares */
 
 // "foo-queue" consumer middleware
-app.consume('foo-queue', function * () {
+app.queue('foo-queue', function * () {
   this.ack = true // checkout `Context` documentation for ack, nack, and more
 })
 
@@ -229,8 +240,8 @@ Connect to RabbitMQ, create channels, and consume queues
  * 1) Creates a connection to rabbitmq
  * 2) Creates a consumer channel and publisher channel
  * 3) Begins consuming queues
- * 4) Optionally creates a process for each queue consumer using node clustering (see "Clustering" below)
-
+ * Note on Clustering:
+    If using clustering and isMaster, it will create all workers and wait for them to connect to RabbitMQ. If any of the workers fail to connect to Rabbitmq they will cause master's connect to error.
 ```
 /**
  * @param {String} [url] rabbitmq connection url, default: 'amqp://127.0.0.1:5672'
@@ -244,7 +255,7 @@ Connect to RabbitMQ, create channels, and consume queues
 ```js
 const app = require('coworkers')()
 
-app.consume('foo-queue', function * () {/*...*/})
+app.queue('foo-queue', function * () {/*...*/})
 
 // promise api
 app.connect() // connects to 'amqp://127.0.0.1:5678' by default, returns promise
@@ -471,7 +482,14 @@ http://www.squaremobius.net/amqp.node/channel_api.html#connect
 
 ## Clustering / Process management
 By default, coworkers will use clustering to give each queue consumer it's own process.
-Clustering is not required, you can manage coworker processes manually (see "Manual process management" below).
+Clustering is optional, you can manage coworker processes manually (see "Manual process management" below).
+
+Clustering is opinionated, it make the processes work as a unit:
+
+ * If a worker fails to startup and connect to rabbitmq, it will kill all the workers
+ * If a workers dies it will be attempted to be respawned w/ exponential backoff
+    * Use the following ENV variables to adjust behavior: `COWORKERS_RESPAWN_RETRY_ATTEMPTS`, `COWORKERS_RESPAWN_RETRY_MIN_TIMEOUT`, `COWORKERS_RESPAWN_RETRY_FACTOR`
+ * If a worker dies and repeatedly fails to create process and connect to rabbitmq it will crash the entire cluster
 
 ##### Clustering example:
 
@@ -495,6 +513,11 @@ app.connect(function (err) {
 ##### Manual process management:
 
 Coworkers forces you to only consume a single queue per process, so that your consumers are decoupled. If you want to manage your own processes w/out using clustering all you have to do is specify three environment variables:
+
+Processes will send process [messages](https://nodejs.org/docs/latest/api/child_process.html#child_process_child_send_message_sendhandle_callback) so that you can determine the state:
+
+ * messages include: 'coworkers:connect', 'coworkers:connect:error', 'coworkers:close', 'coworkers:close:error'
+
 ```bash
 COWORKERS_CLUSTER="false" # {string-boolean} disabled clustering
 COWORKERS_QUEUE="foo-queue" # {string} specify the queue the process will consume
