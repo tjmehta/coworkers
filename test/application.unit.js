@@ -795,10 +795,31 @@ describe('Application', function () {
 
         describe('while connected', function () {
           beforeEach(function (done) {
-            ctx.app.consumerChannel = { close: sinon.stub() }
+            ctx.consumerCloseHandler = function () {}
+            ctx.consumerErrorHandler = function () {}
+            ctx.producerCloseHandler = function () {}
+            ctx.producerErrorHandler = function () {}
+            ctx.connCloseHandler = function () {}
+            ctx.connErrorHandler = function () {}
+            ctx.app.consumerChannel = {
+              removeListener: sinon.stub(),
+              close: sinon.stub(),
+              __coworkersCloseHandler: ctx.consumerCloseHandler,
+              __coworkersErrorHandler: ctx.consumerErrorHandler
+            }
             ctx.app.consumerTag = 0
-            ctx.app.producerChannel = { close: sinon.stub() }
-            ctx.app.connection = { close: sinon.stub() }
+            ctx.app.producerChannel = {
+              removeListener: sinon.stub(),
+              close: sinon.stub(),
+              __coworkersCloseHandler: ctx.producerCloseHandler,
+              __coworkersErrorHandler: ctx.producerErrorHandler
+            }
+            ctx.app.connection = {
+              removeListener: sinon.stub(),
+              close: sinon.stub(),
+              __coworkersCloseHandler: ctx.connCloseHandler,
+              __coworkersErrorHandler: ctx.connErrorHandler
+            }
             ctx.sigintHandler = function () {}
             ctx.app.sigintHandler = ctx.sigintHandler
             process.send = sinon.stub()
@@ -817,9 +838,18 @@ describe('Application', function () {
             expect(promise).to.equal(ctx.app.closingPromise)
             promise.then(function () {
               expect(ctx.app.closingPromise).to.not.exist()
+              sinon.assert.calledTwice(ctx.app.consumerChannel.removeListener)
+              sinon.assert.calledWith(ctx.app.consumerChannel.removeListener, 'close', ctx.consumerCloseHandler)
+              sinon.assert.calledWith(ctx.app.consumerChannel.removeListener, 'error', ctx.consumerErrorHandler)
               sinon.assert.calledOnce(ctx.app.consumerChannel.close)
+              sinon.assert.calledTwice(ctx.app.producerChannel.removeListener)
+              sinon.assert.calledWith(ctx.app.producerChannel.removeListener, 'close', ctx.producerCloseHandler)
+              sinon.assert.calledWith(ctx.app.producerChannel.removeListener, 'error', ctx.producerErrorHandler)
               sinon.assert.calledOnce(ctx.app.producerChannel.close)
               sinon.assert.calledOnce(ctx.app.connection.close)
+              sinon.assert.calledTwice(ctx.app.connection.removeListener)
+              sinon.assert.calledWith(ctx.app.connection.removeListener, 'close', ctx.connCloseHandler)
+              sinon.assert.calledWith(ctx.app.connection.removeListener, 'error', ctx.connErrorHandler)
               sinon.assert.calledOnce(process.removeListener)
               sinon.assert.calledWith(process.removeListener, 'SIGINT', ctx.sigintHandler)
               sinon.assert.calledOnce(process.send)
