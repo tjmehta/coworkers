@@ -6,6 +6,7 @@ const Code = require('code')
 const co = require('co')
 const Lab = require('lab')
 const last = require('101/last')
+const put = require('101/put')
 const proxyquire = require('proxyquire')
 const sinon = require('sinon')
 require('sinon-as-promised')
@@ -84,12 +85,11 @@ describe('ClusterManager', function () {
             .then(function () {
               done(new Error('expected an error'))
             }).catch(function (err) {
-              const worker = ctx.workersCreated[0]
               sinon.assert.calledOnce(ctx.cluster.fork)
-              sinon.assert.calledWith(ctx.cluster.fork, {
+              sinon.assert.calledWith(ctx.cluster.fork, put(process.env, {
                 COWORKERS_QUEUE: queueName,
                 COWORKERS_QUEUE_WORKER_NUM: queueWorkerNum
-              })
+              }))
               expect(err).to.exist()
               expect(err.message).to.match(/worker process exited/)
               done()
@@ -116,10 +116,10 @@ describe('ClusterManager', function () {
             }).catch(function (err) {
               const worker = ctx.workersCreated[0]
               sinon.assert.calledOnce(ctx.cluster.fork)
-              sinon.assert.calledWith(ctx.cluster.fork, {
+              sinon.assert.calledWith(ctx.cluster.fork, put(process.env, {
                 COWORKERS_QUEUE: queueName,
                 COWORKERS_QUEUE_WORKER_NUM: queueWorkerNum
-              })
+              }))
               sinon.assert.calledOnce(ctx.ClusterManager.killWorker)
               sinon.assert.calledWith(ctx.ClusterManager.killWorker, worker)
               expect(err).to.exist()
@@ -145,10 +145,10 @@ describe('ClusterManager', function () {
             .then(function (worker) {
               expect(worker).to.equal(ctx.workersCreated[0])
               sinon.assert.calledOnce(ctx.cluster.fork)
-              sinon.assert.calledWith(ctx.cluster.fork, {
+              sinon.assert.calledWith(ctx.cluster.fork, put(process.env, {
                 COWORKERS_QUEUE: queueName,
                 COWORKERS_QUEUE_WORKER_NUM: queueWorkerNum
-              })
+              }))
               expect(worker.__queueName).to.equal(queueName)
               expect(worker.__queueWorkerNum).to.equal(queueWorkerNum)
               sinon.assert.calledOnce(worker.once)
@@ -192,10 +192,10 @@ describe('ClusterManager', function () {
               const worker = yield ctx.ClusterManager.fork(queueName)
               expect(worker).to.equal(ctx.workersCreated[0])
               sinon.assert.calledOnce(ctx.cluster.fork)
-              sinon.assert.calledWith(ctx.cluster.fork, {
+              sinon.assert.calledWith(ctx.cluster.fork, put(process.env, {
                 COWORKERS_QUEUE: queueName,
                 COWORKERS_QUEUE_WORKER_NUM: queueWorkerNum // 1
-              })
+              }))
               expect(worker.__queueName).to.equal(queueName)
               expect(worker.__queueWorkerNum).to.equal(queueWorkerNum)
               // twice
@@ -203,10 +203,10 @@ describe('ClusterManager', function () {
               queueWorkerNum++
               expect(worker2).to.equal(ctx.workersCreated[1])
               sinon.assert.calledTwice(ctx.cluster.fork)
-              sinon.assert.calledWith(ctx.cluster.fork, {
+              sinon.assert.calledWith(ctx.cluster.fork, put(process.env, {
                 COWORKERS_QUEUE: queueName,
                 COWORKERS_QUEUE_WORKER_NUM: queueWorkerNum // 2
-              })
+              }))
               expect(worker2.__queueName).to.equal(queueName)
               expect(worker2.__queueWorkerNum).to.equal(queueWorkerNum)
               done()
@@ -232,12 +232,11 @@ describe('ClusterManager', function () {
           .then(function () {
             done(new Error('expected an error'))
           }).catch(function (err) {
-            const worker = ctx.workersCreated[0]
             sinon.assert.calledOnce(ctx.cluster.fork)
-            sinon.assert.calledWith(ctx.cluster.fork, {
+            sinon.assert.calledWith(ctx.cluster.fork, put(process.env, {
               COWORKERS_QUEUE: queueName,
               COWORKERS_QUEUE_WORKER_NUM: queueWorkerNum
-            })
+            }))
             expect(err).to.equal(ctx.err)
             done()
           }).catch(done)
@@ -305,7 +304,7 @@ describe('ClusterManager', function () {
           done()
         })
 
-        it('should error if all retries fail', function(done) {
+        it('should error if all retries fail', function (done) {
           sinon.stub(process, 'nextTick')
           ctx.ClusterManager.respawnWorker.call(ctx.worker, 1)
             .then(function () {
@@ -366,7 +365,7 @@ describe('ClusterManager', function () {
     })
 
     describe('errors', function () {
-      describe('one failure', function() {
+      describe('one failure', function () {
         beforeEach(function (done) {
           ctx.err = new Error('boom')
           ctx.first
@@ -385,7 +384,7 @@ describe('ClusterManager', function () {
         })
       })
 
-      describe('max retries', function() {
+      describe('max retries', function () {
         beforeEach(function (done) {
           process.env.COWORKERS_KILL_RETRY_ATTEMPTS = 0
           process.env.COWORKERS_KILL_RETRY_MIN_TIMEOUT = 1

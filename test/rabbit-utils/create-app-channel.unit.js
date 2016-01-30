@@ -136,7 +136,7 @@ describe('RabbitUtils - createAppChannel', function () {
           ctx.err = new Error('boom')
           expect(function () {
             ctx.consumerChannel.emit('error', ctx.err)
-          }).to.throw('"app.consumerChannel" unexpectedly errored: '+ctx.err.message)
+          }).to.throw('"app.consumerChannel" unexpectedly errored: ' + ctx.err.message)
           sinon.assert.calledOnce(createAppChannel.errorHandler)
           sinon.assert.calledWith(
             createAppChannel.errorHandler,

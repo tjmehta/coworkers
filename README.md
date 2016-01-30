@@ -1,7 +1,7 @@
 ![coworkers](http://i.imgur.com/WUEcl4e.png)
 ===
 
-[![Build Status](https://travis-ci.org/tjmehta/coworkers.svg?branch=master)](https://travis-ci.org/tjmehta/coworkers) [![Coverage Status](https://coveralls.io/repos/github/tjmehta/coworkers/badge.svg?branch=master)](https://coveralls.io/github/tjmehta/coworkers?branch=master)
+[![Build Status](https://travis-ci.org/tjmehta/coworkers.svg?branch=master)](https://travis-ci.org/tjmehta/coworkers) [![Coverage Status](https://coveralls.io/repos/github/tjmehta/coworkers/badge.svg?branch=master)](https://coveralls.io/github/tjmehta/coworkers?branch=master) [![js-standard-style](https://img.shields.io/badge/code%20style-standard-brightgreen.svg?style=flat)](http://standardjs.com/)
 
 Coworkers is a RabbitMQ microservice framework
 
@@ -547,6 +547,9 @@ app.queueNames.forEach(function (queueName) {
 })
 //...
 ```
+
+# Changelog
+(CHANGELOG.md)(https://github.com/tjmehta/coworkers/blob/master/CHANGELOG.md)
 
 # License
 MIT
