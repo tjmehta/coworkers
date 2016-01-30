@@ -96,15 +96,20 @@ const coworkers = require('coworkers')
 
 // using optional schema
 const app = coworkers(schema)
+// add required error handler
+app.on('error', function (err) {
+  console.error(err.stack)
+})
+// setup a queue
 const queueOpts = {/* queue options */}
 const consumeOpts = {/* consume options */}
 // correct usage: (note that consumeOpts becomes the second arg)
 app.queue('queue0', consumeOpts, function * () {})
 // errors
 app.queue('queue0', queueOpts, consumeOpts, function * () {})
-// Error: 'app.consume() cannot use "queueOpts" when using a schema'
+// Error: 'app.queue() cannot use "queueOpts" when using a schema'
 app.queue('queue1', queueOpts, consumeOpts, function * () {})
-// Error: 'app.consume() requires "queue1" queue to exist in schema'
+// Error: 'app.queue() requires "queue1" queue to exist in schema'
 ```
 
 ##### app.queue example when using rabbitmq-schema
@@ -129,16 +134,21 @@ const schema = new RabbitSchema({
 
 // using optional schema
 const app = coworkers(schema)
+// add required error handler
+app.on('error', function (err) {
+  console.error(err.stack)
+})
+// setup a queue
 const consumeOpts = {/* consume options */}
 // correct usage: (note that consumeOpts becomes the second arg)
 app.queue('queue0', consumeOpts, function * () {})
 // errors
 const queueOpts = {/* queue options */}
 app.queue('queue0', queueOpts, consumeOpts, function * () {})
-// Error: 'app.consume() cannot use "queueOpts" when using a schema'
+// Error: 'app.queue() cannot use "queueOpts" when using a schema'
 // (It will use the queueOpts from the schema)
 app.queue('queue1', consumeOpts, function * () {})
-// Error: 'app.consume() requires "queue1" queue to exist in schema'
+// Error: 'app.queue() requires "queue1" queue to exist in schema'
 ```
 
 See "Cascading middleware" section (below) for a full example
@@ -177,7 +187,7 @@ app.use(function * (next) {
 /* queue consumers w/ middlewares */
 
 // "foo-queue" consumer middleware
-app.consume('foo-queue', function * () {
+app.queue('foo-queue', function * () {
   this.ack = true // checkout `Context` documentation for ack, nack, and more
 })
 
@@ -244,7 +254,7 @@ Connect to RabbitMQ, create channels, and consume queues
 ```js
 const app = require('coworkers')()
 
-app.consume('foo-queue', function * () {/*...*/})
+app.queue('foo-queue', function * () {/*...*/})
 
 // promise api
 app.connect() // connects to 'amqp://127.0.0.1:5678' by default, returns promise
