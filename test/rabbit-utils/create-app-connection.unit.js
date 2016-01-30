@@ -111,7 +111,7 @@ describe('RabbitUtils - createAppConnection', function () {
           ctx.err = new Error('boom')
           expect(function () {
             ctx.mockConnection.emit('error', ctx.err)
-          }).to.throw('"app.connection" unexpectedly errored: '+ctx.err.message)
+          }).to.throw('"app.connection" unexpectedly errored: ' + ctx.err.message)
           // assert errorHandler called
           sinon.assert.calledOnce(ctx.errorHandler)
           sinon.assert.calledWith(ctx.errorHandler, ctx.app, ctx.err)

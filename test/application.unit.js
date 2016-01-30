@@ -507,7 +507,7 @@ describe('Application', function () {
           })
 
           describe('while closed', function () {
-            describe('success and test sigint', function() {
+            describe('success and test sigint', function () {
               beforeEach(function (done) {
                 ctx.err = new Error('boom')
                 sinon.stub(ctx.app, 'close').rejects(ctx.err)
@@ -555,7 +555,7 @@ describe('Application', function () {
                 sinon.stub(ctx.app, 'close').resolves()
                 ctx.url = process.env.COWORKERS_RABBITMQ_URL = 'amqp://foobar:8080'
                 process.env.COWORKERS_QUEUE_WORKER_NUM = 100
-                //coverage
+                // coverage
                 proxyquire('../lib/application.js', {
                   './cluster-manager.js': ctx.ClusterManager
                 })({ queueName: 'foo' })
@@ -631,7 +631,7 @@ describe('Application', function () {
           })
 
           describe('connect errors', function () {
-            describe('has process.send', function() {
+            describe('has process.send', function () {
               beforeEach(function (done) {
                 process.send = sinon.stub()
                 done()
@@ -858,102 +858,9 @@ describe('Application', function () {
                 done()
               }).catch(done)
             })
-          });
+          })
         })
       })
     })
-
-    // describe('onerror', function () {
-    //   beforeEach(function (done) {
-    //     ctx.app.consumerChannel = { nack: sinon.stub() }
-    //     ctx.context = new Context(ctx.app, 'queue-name', {})
-    //     sinon.stub(console, 'error')
-    //     done()
-    //   })
-    //   afterEach(function (done) {
-    //     console.error.restore()
-    //     done()
-    //   })
-
-    //   it('it should throw an error if it recieves a non-error', function (done) {
-    //     ctx.app.onerror.call(ctx.context, 10)
-    //       .then(function () {
-    //         done(new Error('expected an error'))
-    //       })
-    //       .catch(function (err) {
-    //         expect(err).to.be.an.instanceOf(Error)
-    //         expect(err.message).to.equal('non-error thrown: 10')
-    //         done()
-    //       })
-    //   })
-
-    //   it('should log error.stack', function (done) {
-    //     const err = new Error('boom')
-    //     ctx.app.consumerChannel.nack.resolves()
-    //     ctx.app.onerror.call(ctx.context, err)
-    //     sinon.assert.calledThrice(console.error)
-    //     sinon.assert.calledWith(console.error.firstCall)
-    //     sinon.assert.calledWith(console.error.secondCall, err.stack.replace(/^/gm, '  '))
-    //     sinon.assert.calledWith(console.error.thirdCall)
-    //     done()
-    //   })
-
-    //   it('should log error.toString() if stack does not exist', function (done) {
-    //     const err = new Error('boom')
-    //     ctx.app.consumerChannel.nack.resolves()
-    //     delete err.stack
-    //     ctx.app.onerror.call(ctx.context, err)
-    //     sinon.assert.calledThrice(console.error)
-    //     sinon.assert.calledWith(console.error.firstCall)
-    //     sinon.assert.calledWith(console.error.secondCall, err.toString().replace(/^/gm, '  '))
-    //     sinon.assert.calledWith(console.error.thirdCall)
-    //     done()
-    //   })
-
-    //   it('should log runtime error if onerror errors', function (done) {
-    //     const err = new Error('boom')
-    //     ctx.app.consumerChannel.nack.resolves()
-    //     delete err.stack
-    //     err.toString = function () {
-    //       return null
-    //     }
-    //     ctx.app.onerror.call(ctx.context, err)
-    //       .catch(function (err) {
-    //         var errMessageRE = /Cannot read property.*replace.*of/
-    //         const replaceErr = sinon.match(function (str) {
-    //           return errMessageRE.test(str)
-    //         }, 'Cannot read property "replace"')
-    //         expect(err.message).to.match(errMessageRE)
-    //         sinon.assert.calledThrice(console.error)
-    //         sinon.assert.calledWith(console.error.firstCall)
-    //         sinon.assert.calledWith(console.error.secondCall, replaceErr)
-    //         sinon.assert.calledWith(console.error.thirdCall)
-    //         done()
-    //       })
-    //   })
-
-    //   describe('silent', function () {
-    //     beforeEach(function (done) {
-    //       ctx.app.silent = true
-    //       done()
-    //     })
-
-    //     it('it should throw an error if it recieves a non-error', function (done) {
-    //       ctx.app.onerror.call(ctx.context, 10)
-    //         .catch(function (err) {
-    //           expect(err).to.be.an.instanceOf(Error)
-    //           expect(err.message).to.equal('non-error thrown: 10')
-    //           done()
-    //         })
-    //     })
-
-    //     it('should NOT log error', function (done) {
-    //       const err = new Error('boom')
-    //       ctx.app.onerror.call(ctx.context, err)
-    //       sinon.assert.notCalled(console.error)
-    //       done()
-    //     })
-    //   })
-    // })
   })
 })

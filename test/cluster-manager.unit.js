@@ -85,7 +85,6 @@ describe('ClusterManager', function () {
             .then(function () {
               done(new Error('expected an error'))
             }).catch(function (err) {
-              const worker = ctx.workersCreated[0]
               sinon.assert.calledOnce(ctx.cluster.fork)
               sinon.assert.calledWith(ctx.cluster.fork, put(process.env, {
                 COWORKERS_QUEUE: queueName,
@@ -233,7 +232,6 @@ describe('ClusterManager', function () {
           .then(function () {
             done(new Error('expected an error'))
           }).catch(function (err) {
-            const worker = ctx.workersCreated[0]
             sinon.assert.calledOnce(ctx.cluster.fork)
             sinon.assert.calledWith(ctx.cluster.fork, put(process.env, {
               COWORKERS_QUEUE: queueName,
@@ -306,7 +304,7 @@ describe('ClusterManager', function () {
           done()
         })
 
-        it('should error if all retries fail', function(done) {
+        it('should error if all retries fail', function (done) {
           sinon.stub(process, 'nextTick')
           ctx.ClusterManager.respawnWorker.call(ctx.worker, 1)
             .then(function () {
@@ -367,7 +365,7 @@ describe('ClusterManager', function () {
     })
 
     describe('errors', function () {
-      describe('one failure', function() {
+      describe('one failure', function () {
         beforeEach(function (done) {
           ctx.err = new Error('boom')
           ctx.first
@@ -386,7 +384,7 @@ describe('ClusterManager', function () {
         })
       })
 
-      describe('max retries', function() {
+      describe('max retries', function () {
         beforeEach(function (done) {
           process.env.COWORKERS_KILL_RETRY_ATTEMPTS = 0
           process.env.COWORKERS_KILL_RETRY_MIN_TIMEOUT = 1
