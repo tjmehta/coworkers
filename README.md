@@ -548,5 +548,8 @@ app.queueNames.forEach(function (queueName) {
 //...
 ```
 
+# Changelog
+(CHANGELOG.md)(https://github.com/tjmehta/coworkers/blob/master/CHANGELOG.md)
+
 # License
 MIT
