@@ -167,9 +167,7 @@ describe('Application', function () {
             queue: 'queue-name',
             messageSchema: {}
           })
-          ctx.app = new Application({
-            schema: schema
-          })
+          ctx.app = new Application(schema)
           done()
         })
 
