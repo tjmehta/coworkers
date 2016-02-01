@@ -2,6 +2,7 @@
 Application:
   * Fix broken `new Application(schema)` constructor now accepts `schema` or `options`
 
+# 0.2.2
 Application:
   * Remove close/exit handlers before closing rabbit connection and channels in `close`
 
