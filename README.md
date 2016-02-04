@@ -548,6 +548,9 @@ app.queueNames.forEach(function (queueName) {
 //...
 ```
 
+# Testing
+Check out [coworkers-test](https://github.com/tjmehta/coworkers-test) it allows you to easily test a coworkers app message-handling middlewares as a unit w/out requiring rabbitmq.
+
 # Changelog
 [CHANGELOG.md](https://github.com/tjmehta/coworkers/blob/master/CHANGELOG.md)
 
