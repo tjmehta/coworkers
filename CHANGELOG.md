@@ -1,3 +1,15 @@
+# 0.3.0
+Application
+  * Added optional `Context` arg to `messageHandler` for easier testing
+NoAckErr
+  * Improved stack
+Debug
+  * Fixed issues w/ filepaths logged
+Readme:
+  * Added link to coworkers-test
+Package.json
+  * Removed callsite dependency
+
 # 0.2.3
 Application:
   * Fix broken `new Application(schema)` constructor now accepts `schema` or `options`
