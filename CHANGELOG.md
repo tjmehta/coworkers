@@ -5,6 +5,8 @@ NoAckErr
   * Improved stack
 Debug
   * Fixed issues w/ filepaths logged
+CastToBuffer
+  * Moved to external module `cast-buffer`
 Readme:
   * Added link to coworkers-test
 Package.json
