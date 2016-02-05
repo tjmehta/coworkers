@@ -33,7 +33,7 @@
   "dependencies": {
     "101": "^1.2.0",
     "assert-args": "^1.0.3",
-    "callsite": "^1.0.0",
+    "cast-buffer": "^1.1.0",
     "co": "^4.6.0",
     "debug": "^2.2.0",
     "ee-first": "^1.1.1",

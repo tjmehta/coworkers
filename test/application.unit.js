@@ -317,7 +317,7 @@ describe('Application', function () {
         it('should create a handler that calls all middlewares and queueMiddlewares in order', function (done) {
           var handler = ctx.app.messageHandler(ctx.queueName)
           expect(handler).to.be.a.function()
-          expect(handler.length).to.equal(1)
+          expect(handler.length).to.equal(2)
           handler(ctx.message)
             .then(function () {
               sinon.assert.calledOnce(ctx.Context)
@@ -334,6 +334,32 @@ describe('Application', function () {
                 10,
                 'respond'
               ])
+              sinon.assert.calledOnce(ctx.mockRespond)
+              sinon.assert.calledOn(ctx.mockRespond, ctx.context)
+              done()
+            })
+            .catch(done)
+        })
+
+        it('allow for easing Context stubbing, to aid easy testing', function (done) {
+          var handler = ctx.app.messageHandler(ctx.queueName)
+          expect(handler).to.be.a.function()
+          expect(handler.length).to.equal(2)
+          const mockContextFactory = require('./mock-context-factory')
+          handler(ctx.message, mockContextFactory)
+            .then(function (context) {
+              expect(ctx.invokeOrder).to.deep.equal([
+                1,
+                2,
+                3,
+                4,
+                40,
+                30,
+                20,
+                10,
+                'respond'
+              ])
+              expect(context.state.order).to.equal(ctx.invokeOrder)
               sinon.assert.calledOnce(ctx.mockRespond)
               sinon.assert.calledOn(ctx.mockRespond, ctx.context)
               done()
