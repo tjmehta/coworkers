@@ -220,10 +220,8 @@ app.on('error', function (err, context) {
     let channel = context.consumerChannel // amqplib promise api: http://www.squaremobius.net/amqp.node/channel_api.html#channel
     let message = context.message
     let requeue = false
-    // nack the message and handle any errors
-    channel.nack(message, requeue).catch(function (err) {
-      log.error(`${context.queueName} error handler nack error`, err)
-    })
+    // nack the message
+    channel.nack(message, requeue)
   }
 })
 ```
