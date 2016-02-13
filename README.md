@@ -373,6 +373,7 @@ app.use(function * () {
 * this.sendToQueue(...) - publish a message directly to a queue on the publisherChannel
 * this.request(...) - publish an rpc message, and easily recieve it's reply, creates a new channel for publishing and consuming
 * this.reply(...) - reply to an rpc message on the publisherChannel
+* this.toJSON() - return json version of context (note: will not jsonify context.state, if it includes non-primitives)
 
 ##### Publish example:
 ```js
