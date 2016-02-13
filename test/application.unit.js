@@ -23,15 +23,15 @@ describe('Application', function () {
   let ctx
   // utils
   function sinonPromiseStub () {
-    let resolve
-    let reject
-    const promise = new Promise(function (res, rej) {
-      resolve = res
-      reject = rej
+    let _resolve
+    let _reject
+    const promise = new Promise(function (resolve, reject) {
+      _resolve = resolve
+      _reject = reject
     })
     const stub = sinon.stub().returns(promise)
-    stub.resolve = resolve
-    stub.reject = reject
+    stub.resolve = _resolve
+    stub.reject = _reject
 
     return stub
   }

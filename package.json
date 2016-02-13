@@ -37,7 +37,6 @@
     "cast-buffer": "^1.1.0",
     "co": "^4.6.0",
     "debug": "^2.2.0",
-    "ee-first": "^1.1.1",
     "first-event": "^1.0.0",
     "is-generator": "^1.0.2",
     "koa-compose": "^2.3.0",
@@ -56,7 +55,7 @@
     "rabbitmq-schema": "^1.1.0",
     "sinon": "^1.17.2",
     "sinon-as-promised": "^4.0.0",
-    "standard": "^5.4.1"
+    "standard": "^6.0.5"
   },
   "standard": {
     "parser": "babel-eslint"

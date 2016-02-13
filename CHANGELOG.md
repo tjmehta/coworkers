@@ -1,3 +1,8 @@
+# 0.4.1
+Package:
+  * Remove unused `ee-first`
+  * Update standard to 6.0.5
+
 # 0.4.0
 Context:
   * Added `context.toJSON()`
