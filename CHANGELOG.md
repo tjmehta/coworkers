@@ -1,3 +1,10 @@
+# 0.3.1
+Context:
+  * Moved `request` logic out to `amqplib-rpc`
+  * Moved `reply` logic out to `amqplib-rpc`
+Package:
+  * Removed `uuid`
+
 # 0.3.0
 Application:
   * Added optional `Context` arg to `messageHandler` for easier testing

@@ -1,11 +1,7 @@
 'use strict'
 
-const EventEmitter = require('events').EventEmitter
-
-const assign = require('101/assign')
 const Code = require('code')
 const Lab = require('lab')
-const put = require('101/put')
 const proxyquire = require('proxyquire')
 const sinon = require('sinon')
 require('sinon-as-promised')
@@ -87,9 +83,12 @@ describe('Context', function () {
       ctx.consumeOpts = { noAck: true }
       ctx.app.queue(ctx.queueName, ctx.queueOpts, ctx.consumeOpts, function * () {})
       // create context
-      ctx.first = sinon.stub()
+      ctx.amqplibRpc = {
+        request: sinon.stub(),
+        reply: sinon.stub()
+      }
       ctx.Context = proxyquire('../lib/context.js', {
-        'ee-first': ctx.first
+        'amqplib-rpc': ctx.amqplibRpc
       })
       ctx.context = new ctx.Context(ctx.app, ctx.queueName, ctx.message)
       done()
@@ -197,26 +196,17 @@ describe('Context', function () {
       beforeEach(function (done) {
         ctx.content = 'content'
         ctx.options = {}
-        ctx.replyTo = 'reply-queue'
-        ctx.correlationId = '12345'
-        ctx.context.message.properties = {
-          replyTo: ctx.replyTo,
-          correlationId: ctx.correlationId
-        }
-        // replies must be made on same channel which message was recieved
-        ctx.context.publisherChannel.sendToQueue = sinon.stub()
         done()
       })
 
       it('should reply to an rpc request message', function (done) {
         ctx.context.reply(ctx.content, ctx.options)
-        sinon.assert.calledOnce(ctx.context.publisherChannel.sendToQueue)
-        const expectedOptions = put(ctx.options, {
-          correlationId: ctx.correlationId
-        })
-        sinon.assert.calledWith(
-          ctx.context.publisherChannel.sendToQueue,
-          ctx.replyTo, new Buffer(ctx.content), expectedOptions)
+        sinon.assert.calledOnce(ctx.amqplibRpc.reply)
+        sinon.assert.calledWith(ctx.amqplibRpc.reply,
+          ctx.context.publisherChannel,
+          ctx.message,
+          ctx.content,
+          ctx.options)
         done()
       })
     })
@@ -227,193 +217,35 @@ describe('Context', function () {
         ctx.sendOpts = {}
         ctx.queueOpts = {}
         ctx.consumeOpts = {}
-        done()
-      })
-      beforeEach(function (done) {
         ctx.replyQueue = 'reply-queue'
-        ctx.replyContent = 'reply-content'
-        ctx.replyChannel = assign(new EventEmitter(), {
-          assertQueue: sinon.stub().resolves({
-            queue: ctx.replyQueue
-          }),
-          consume: mockConsume,
-          sendToQueue: mockSendToQueue,
-          close: sinon.stub()
-        })
-        ctx.thunk = { cancel: sinon.stub() }
-        ctx.first.returns(ctx.thunk)
-        ctx.context.connection.createChannel = sinon.stub().resolves(ctx.replyChannel)
-        ctx.consumeSpy = sinon.spy(ctx.replyChannel, 'consume')
-        ctx.sendToQueueSpy = sinon.spy(ctx.replyChannel, 'sendToQueue')
-        // mockConsume and mockSend
-        function mockConsume (replyQueue, handler) {
-          ctx.consumeMsgHandler = handler
-          return new Promise(function (r) { r() })
+        ctx.replyMessage = {
+          properties: { correlationId: 1 },
+          content: 'reply-content'
         }
-        function mockSendToQueue (queue, content, opts) {
-          process.nextTick(function () {
-            const noiseMessage = {
-              content: 'hai', properties: {}
-            }
-            ctx.consumeMsgHandler(noiseMessage)
-            const replyMessage = {
-              content: ctx.replyContent,
-              properties: {
-                correlationId: opts.correlationId
-              }
-            }
-            ctx.consumeMsgHandler(replyMessage)
-          })
-        }
+        ctx.amqplibRpc.request.resolves(ctx.replyMessage)
         done()
       })
 
-      describe('success req and reply', function () {
-        beforeEach(function (done) {
-          ctx.replyChannel.close.resolves()
-          done()
-        })
-
-        it('should make a request to an rpc queue', function (done) {
-          var channelCreatedHandler = sinon.stub()
-          var channelClosedHandler = sinon.stub()
-          ctx.app.once('channel:create', channelCreatedHandler)
-          ctx.app.once('channel:close', channelClosedHandler)
-          ctx.context.request(
-            ctx.queueName, ctx.content,
-            ctx.sendOpts, ctx.queueOpts, ctx.consumeOpts
-          ).then(success).catch(done)
-          function success () {
-            // assert connection creation
-            sinon.assert.calledOnce(ctx.context.connection.createChannel)
-            sinon.assert.calledOnce(channelCreatedHandler)
-            sinon.assert.calledWith(
-              channelCreatedHandler, ctx.replyChannel, 'rpc')
-            // assert channel creation
-            sinon.assert.calledOnce(ctx.replyChannel.assertQueue)
-            sinon.assert.calledWith(
-              ctx.replyChannel.assertQueue, '', ctx.queueOpts)
-            // setup reply consumer
-            sinon.assert.calledOnce(ctx.consumeSpy)
-            sinon.assert.calledWith(
-              ctx.consumeSpy, ctx.replyQueue, sinon.match.func, ctx.consumeOpts)
-            // assert message send
-            sinon.assert.calledOnce(ctx.sendToQueueSpy)
-            sinon.assert.calledWith(
-              ctx.sendToQueueSpy,
-              ctx.queueName, new Buffer(ctx.content), ctx.sendOpts)
-            // assert channel handler detach
-            sinon.assert.calledOnce(ctx.thunk.cancel)
-            // channel close
-            sinon.assert.calledOnce(ctx.replyChannel.close)
-            sinon.assert.calledOnce(channelClosedHandler)
-            sinon.assert.calledWith(channelClosedHandler, ctx.replyChannel, 'rpc')
+      it('should make a rpc request', function (done) {
+        ctx.context.request(
+          ctx.queueName,
+          ctx.content,
+          ctx.sendOpts,
+          ctx.queueOpts,
+          ctx.consumeOpts).then(function (replyMessage) {
+            expect(replyMessage).to.equal(ctx.replyMessage)
+            sinon.assert.calledOnce(ctx.amqplibRpc.request)
+            sinon.assert.calledWith(ctx.amqplibRpc.request,
+              ctx.app.connection,
+              ctx.queueName,
+              new Buffer(ctx.content),
+              {
+                sendOpts: {},
+                queueOpts: {},
+                consumeOpts: {}
+              })
             done()
-          }
-        })
-      })
-
-      describe('channel errors before reply', function () {
-        beforeEach(function (done) {
-          ctx.replyChannel.close.resolves()
-          ctx.thunk = { cancel: sinon.stub() }
-          ctx.err = new Error('channel errored')
-          ctx.first.callsArgWith(1, ctx.err)
-          done()
-        })
-
-        it('should catch the error', function (done) {
-          var channelCreatedHandler = sinon.stub()
-          var channelClosedHandler = sinon.stub()
-          ctx.app.once('channel:create', channelCreatedHandler)
-          ctx.app.once('channel:close', channelClosedHandler)
-          ctx.context.request(
-            ctx.queueName, ctx.content,
-            ctx.sendOpts, ctx.queueOpts, ctx.consumeOpts
-          ).then(function () {
-            done(new Error('expected an error'))
-          }).catch(function (err) {
-            expect(err).to.equal(err)
-            sinon.assert.notCalled(ctx.replyChannel.close)
-            done()
-          })
-        })
-      })
-
-      describe('channel exists before reply', function () {
-        beforeEach(function (done) {
-          ctx.replyChannel.close.resolves()
-          ctx.thunk = { cancel: sinon.stub() }
-          ctx.first.callsArgWith(1)
-          done()
-        })
-
-        it('should catch the error', function (done) {
-          var channelCreatedHandler = sinon.stub()
-          var channelClosedHandler = sinon.stub()
-          ctx.app.once('channel:create', channelCreatedHandler)
-          ctx.app.once('channel:close', channelClosedHandler)
-          ctx.context.request(
-            ctx.queueName, ctx.content,
-            ctx.sendOpts, ctx.queueOpts, ctx.consumeOpts
-          ).then(function () {
-            done(new Error('expected an error'))
-          }).catch(function (err) {
-            expect(err).to.exist()
-            expect(err.message).to.match(/channel exited/)
-            sinon.assert.notCalled(ctx.replyChannel.close)
-            done()
-          })
-        })
-      })
-
-      describe('channel close error', function () {
-        beforeEach(function (done) {
-          ctx.closeErr = new Error('close error')
-          ctx.replyChannel.close.rejects(ctx.closeErr)
-          done()
-        })
-
-        it('should emit "channel:close:error"', function (done) {
-          var channelCloseErroredHandler = sinon.stub()
-          ctx.app.once('channel:close:error', channelCloseErroredHandler)
-          ctx.context.request(
-            ctx.queueName, ctx.content,
-            ctx.sendOpts, ctx.queueOpts, ctx.consumeOpts
-          ).then(success).catch(done)
-          function success () {
-            sinon.assert.calledOnce(ctx.replyChannel.close)
-            process.nextTick(function () {
-              sinon.assert.calledOnce(ctx.replyChannel.close)
-              sinon.assert.calledOnce(channelCloseErroredHandler)
-              sinon.assert.calledWith(
-                channelCloseErroredHandler,
-                ctx.closeErr, ctx.replyChannel, 'rpc')
-              done()
-            })
-          }
-        })
-      })
-
-      describe('create channel err', function () {
-        beforeEach(function (done) {
-          ctx.channelErr = new Error('channel create err')
-          ctx.replyChannel.assertQueue = sinon.stub().rejects(ctx.channelErr)
-          ctx.replyChannel.close.resolves()
-          done()
-        })
-
-        it('should callback the error', function (done) {
-          ctx.context.request(
-            ctx.queueName, ctx.content,
-            ctx.sendOpts, ctx.queueOpts, ctx.consumeOpts
-          ).then(function () {
-            done(new Error('expected an error'))
-          }).catch(function (err) {
-            expect(err).to.equal(ctx.channelErr)
-            done()
-          })
-        })
+          }).catch(done)
       })
     })
   })
