@@ -1,3 +1,7 @@
+# 0.4.0
+Context:
+  * Added `context.toJSON()`
+
 # 0.3.1
 Context:
   * Moved `request` logic out to `amqplib-rpc`
