@@ -248,5 +248,26 @@ describe('Context', function () {
           }).catch(done)
       })
     })
+
+    describe('toJSON', function () {
+      it('should return json version of context', function (done) {
+        expect(ctx.context.toJSON()).to.only.include([
+          'queueName',
+          'message',
+          'deliveryTag',
+          'queueOpts',
+          'consumeOpts',
+          'messageAcked',
+          'state',
+          'ack',
+          'nack',
+          'ackAll',
+          'nackAll',
+          'reject',
+          'appFoo'
+        ])
+        done()
+      })
+    })
   })
 })
