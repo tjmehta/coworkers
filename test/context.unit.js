@@ -29,8 +29,16 @@ describe('Context', function () {
       ctx.queueName = 'queue-name'
       ctx.message = {
         fields: {
-          deliveryTag: 1
-        }
+          consumerTag: 'foo',
+          deliveryTag: 1,
+          redelivered: false,
+          exchange: '',
+          routingKey: 'routing.key'
+        },
+        properties: {
+          headers: {}
+        },
+        content: new Buffer('foo')
       }
       ctx.app = new Application()
       ctx.app.connection = {}
@@ -46,8 +54,6 @@ describe('Context', function () {
     it('should create a context', function (done) {
       const app = ctx.app
       const context = new Context(ctx.app, ctx.queueName, ctx.message)
-      // expect context to be added on the message
-      expect(ctx.message.context).to.equal(context)
       // expect context to copy app properties
       expect(context.appFoo).to.equal(ctx.app.context.appFoo)
       expect(context.app).to.equal(app)
@@ -57,6 +63,7 @@ describe('Context', function () {
       // expect context properties
       expect(context.queueName).to.equal(ctx.queueName)
       expect(context.message).to.equal(ctx.message)
+      expect(context.consumerTag).to.equal(ctx.message.fields.consumerTag)
       expect(context.deliveryTag).to.equal(ctx.message.fields.deliveryTag)
       expect(context.queueOpts).to.contain(ctx.queueOpts)
       expect(context.consumeOpts).to.contain(ctx.consumeOpts)
@@ -71,8 +78,16 @@ describe('Context', function () {
       ctx.queueName = 'queue-name'
       ctx.message = {
         fields: {
-          deliveryTag: 1
-        }
+          consumerTag: 'foo',
+          deliveryTag: 1,
+          redelivered: false,
+          exchange: '',
+          routingKey: 'routing.key'
+        },
+        properties: {
+          headers: {}
+        },
+        content: new Buffer('foo')
       }
       ctx.app = new Application()
       ctx.app.connection = {}
@@ -254,10 +269,19 @@ describe('Context', function () {
         expect(ctx.context.toJSON()).to.only.include([
           'queueName',
           'message',
+          'content',
+          'properties', // props
+          'headers',
+          'messageAcked',
+          'fields', // fields
+          'consumerTag',
           'deliveryTag',
+          'redelivered',
+          'exchange',
+          'routingKey',
+          // other
           'queueOpts',
           'consumeOpts',
-          'messageAcked',
           'state',
           'ack',
           'nack',
@@ -266,6 +290,78 @@ describe('Context', function () {
           'reject',
           'appFoo'
         ])
+        done()
+      })
+    })
+
+    describe('accessors', function () {
+      it('should allow both getting and settings accessors', function (done) {
+        // message
+        ctx.context.content = 'foobar'
+        expect(ctx.context.content)
+          .to.equal(ctx.context.message.content)
+          .to.equal('foobar')
+        ctx.context.messageAcked = true
+        expect(ctx.context.messageAcked)
+          .to.equal(ctx.context.message.messageAcked)
+          .to.equal(true)
+        // fields
+        ctx.context.redelivered = true
+        expect(ctx.context.redelivered)
+          .to.equal(ctx.context.fields.redelivered)
+          .to.equal(ctx.context.message.fields.redelivered)
+          .to.equal(true)
+        ctx.context.exchange = 'foobar'
+        expect(ctx.context.exchange)
+          .to.equal(ctx.context.message.fields.exchange)
+          .to.equal('foobar')
+        ctx.context.routingKey = 'foobar'
+        expect(ctx.context.routingKey)
+          .to.equal(ctx.context.fields.routingKey)
+          .to.equal(ctx.context.message.fields.routingKey)
+          .to.equal('foobar')
+        done()
+      })
+    })
+
+    describe('getters', function () {
+      it('should only allow getting accessors', function (done) {
+        // message
+        expect(function () {
+          ctx.context.fields = 'foobar'
+        }).to.throw(/Cannot set/)
+        expect(ctx.context.fields)
+          .to.equal(ctx.context.message.fields)
+          .to.not.equal('foobar')
+        expect(function () {
+          ctx.context.properties = 'foobar'
+        }).to.throw(/Cannot set/)
+        expect(ctx.context.properties)
+          .to.equal(ctx.context.message.properties)
+          .to.not.equal('foobar')
+        // properties
+        expect(function () {
+          ctx.context.headers = 'foobar'
+        }).to.throw(/Cannot set/)
+        expect(ctx.context.headers)
+          .to.equal(ctx.context.properties.headers)
+          .to.equal(ctx.context.message.properties.headers)
+          .to.not.equal('foobar')
+        // fields
+        expect(function () {
+          ctx.context.consumerTag = 'foobar'
+        }).to.throw(/Cannot set/)
+        expect(ctx.context.consumerTag)
+          .to.equal(ctx.context.fields.consumerTag)
+          .to.equal(ctx.context.message.fields.consumerTag)
+          .to.not.equal('foobar')
+        expect(function () {
+          ctx.context.deliveryTag = 'foobar'
+        }).to.throw(/Cannot set/)
+        expect(ctx.context.deliveryTag)
+          .to.equal(ctx.context.fields.deliveryTag)
+          .to.equal(ctx.context.message.fields.deliveryTag)
+          .to.not.equal('foobar')
         done()
       })
     })

@@ -56,9 +56,9 @@ describe('RabbitUtils - createAppChannel', function () {
         sinon.assert.calledOnce(ctx.app.emit)
         sinon.assert.calledWith(ctx.app.emit, 'channel:create', ctx.consumerChannel)
         // assert ack and nack wrapped w/ multi call error
-        const message = { context: {} }
+        const message = {}
         ctx.consumerChannel.ack(message)
-        expect(message.context.messageAcked).to.be.true()
+        expect(message.messageAcked).to.be.true()
         expect(function () {
           ctx.consumerChannel.ack(message)
         }).to.throw(/cannot be acked/)
