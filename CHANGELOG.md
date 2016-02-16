@@ -1,3 +1,18 @@
+# 0.5.0
+  * Use `delegates` for message accessors/getters on `context`
+  * Added `context.message` delegates
+    * `fields` getter
+    * `properties` getter
+    * `content` accessor
+    * `messageAcked` accessor
+  * Added `context.properties` getter for `headers`
+  * Added `context.fields` delegates
+    * `exchange` accessor
+    * `routingKey` accessor
+    * `deliveryTag` getter
+    * `consumerTag` getter
+    * `redelivered` getter
+
 # 0.4.1
 Package:
   * Remove unused `ee-first`

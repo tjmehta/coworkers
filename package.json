@@ -37,6 +37,7 @@
     "cast-buffer": "^1.1.0",
     "co": "^4.6.0",
     "debug": "^2.2.0",
+    "delegates": "^1.0.0",
     "first-event": "^1.0.0",
     "is-generator": "^1.0.2",
     "koa-compose": "^2.3.0",

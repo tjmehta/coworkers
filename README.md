@@ -337,7 +337,15 @@ For the most part context models should not need to be used. Context accessor an
 ### Context Properties
 * this.queueName - name of the queue from which the message origin* ated
 * this.message - the incoming rabbitmq message*
-* this.deliveryTag - delivery tag of the message, `message.fields.* deliveryTag`
+* this.content - message content buffer, `message.content` accessor
+* this.fields - message fields, `message.fields` getter
+* this.properties - message properties, `message.properties` getter
+* this.headers - message headers, `message.properties.headers` getter
+* this.exchange - exchange which the message was published to, `message.fields.exchange` accessor
+* this.routingKey - routingKey which the message was published with, `message.fields.routingKey` accessor
+* this.deliveryTag - delivery tag of the message, `message.fields.deliveryTag` getter
+* this.consumerTag - unique identifier of consumer, `message.fields.consumerTag` getter
+* this.redelivered - whether message was redelivered, `message.fields.redelivered` getter
 * this.queueOpts - queue options used to assert the queue
 * this.consumeOpts - queue's consume options
 * this.messageAcked - boolean, whether message has been acknowledged (ack, nack, reject)
