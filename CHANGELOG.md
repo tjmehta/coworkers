@@ -1,12 +1,13 @@
 # 0.5.0
   * Use `delegates` for message accessors/getters on `context`
-  * Added `context.message` delegates
+  * Added `context` delegates for `message`
     * `fields` getter
     * `properties` getter
     * `content` accessor
     * `messageAcked` accessor
-  * Added `context.properties` getter for `headers`
-  * Added `context.fields` delegates
+  * Added `context` delegates for `message.properties`
+    * `headers` getter
+  * Added `context` delegates for `message.fields`
     * `exchange` accessor
     * `routingKey` accessor
     * `deliveryTag` getter
