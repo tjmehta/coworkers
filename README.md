@@ -96,7 +96,7 @@ Setup a queue consumer w/ options and middleware. Queues will be asserted and co
 const coworkers = require('coworkers')
 
 // using optional schema
-const app = coworkers(schema)
+const app = coworkers({ schema: schema })
 // add required error handler
 app.on('error', function (err) {
   console.error(err.stack)
