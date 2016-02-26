@@ -1,3 +1,7 @@
+# 0.6.0
+  * Added `context.checkQueue()`
+  * Added `context.checkReplyQueue()`
+
 # 0.5.0
   * Use `delegates` for message accessors/getters on `context`
   * Added `context` delegates for `message`
