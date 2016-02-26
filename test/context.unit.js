@@ -264,9 +264,76 @@ describe('Context', function () {
       })
     })
 
+    describe('checkQueue', function () {
+      beforeEach(function (done) {
+        ctx.ret = {}
+        ctx.amqplibRpc = {
+          checkQueue: sinon.stub().returns(ctx.ret)
+        }
+        ctx.Context = proxyquire('../lib/context.js', {
+          'amqplib-rpc': ctx.amqplibRpc
+        })
+        ctx.connection = {}
+        ctx.app = {
+          connection: ctx.connection,
+          queueMiddlewares: {}
+        }
+        ctx.app.queueMiddlewares[ctx.queueName] = {}
+        ctx.queueName = 'queue-name'
+        ctx.message = {}
+        ctx.context = new ctx.Context(ctx.app, ctx.queueName, ctx.message)
+        done()
+      })
+
+      it('should call amqplib-rpc checkQueue', function (done) {
+        var checkQueueName = 'check-queue-name'
+        var cb = function () {}
+        var ret = ctx.context.checkQueue(checkQueueName, cb)
+        sinon.assert.calledOnce(ctx.amqplibRpc.checkQueue)
+        sinon.assert.calledWith(ctx.amqplibRpc.checkQueue,
+          ctx.connection, checkQueueName, cb)
+        expect(ret).to.equal(ctx.ret)
+        done()
+      })
+    })
+
+    describe('checkReplyQueue', function () {
+      beforeEach(function (done) {
+        ctx.ret = {}
+        ctx.amqplibRpc = {
+          checkReplyQueue: sinon.stub().returns(ctx.ret)
+        }
+        ctx.Context = proxyquire('../lib/context.js', {
+          'amqplib-rpc': ctx.amqplibRpc
+        })
+        ctx.connection = {}
+        ctx.app = {
+          connection: ctx.connection,
+          queueMiddlewares: {}
+        }
+        ctx.app.queueMiddlewares[ctx.queueName] = {}
+        ctx.queueName = 'queue-name'
+        ctx.message = {}
+        ctx.context = new ctx.Context(ctx.app, ctx.queueName, ctx.message)
+        done()
+      })
+
+      it('should call amqplib-rpc checkReplyQueue', function (done) {
+        var cb = function () {}
+        var ret = ctx.context.checkReplyQueue(cb)
+        sinon.assert.calledOnce(ctx.amqplibRpc.checkReplyQueue)
+        sinon.assert.calledWith(ctx.amqplibRpc.checkReplyQueue,
+          ctx.connection, ctx.message, cb)
+        expect(ret).to.equal(ctx.ret)
+        done()
+      })
+    })
+
     describe('toJSON', function () {
       it('should return json version of context', function (done) {
-        expect(ctx.context.toJSON()).to.only.include([
+        expect(
+          Object.keys(ctx.context.toJSON()).sort()
+        ).to.deep.equal([
           'queueName',
           'message',
           'content',
@@ -289,7 +356,7 @@ describe('Context', function () {
           'nackAll',
           'reject',
           'appFoo'
-        ])
+        ].sort())
         done()
       })
     })

@@ -335,8 +335,8 @@ For the most part context models should not need to be used. Context accessor an
 * this.publisherChannel - amqplib* rabbitmq channel dedicated to publishing, see "Channel" documentation below
 
 ### Context Properties
-* this.queueName - name of the queue from which the message origin* ated
-* this.message - the incoming rabbitmq message*
+* this.queueName - name of the queue from which the message originated
+* this.message - the incoming rabbitmq message
 * this.content - message content buffer, `message.content` accessor
 * this.fields - message fields, `message.fields` getter
 * this.properties - message properties, `message.properties` getter
@@ -381,6 +381,8 @@ app.use(function * () {
 * this.sendToQueue(...) - publish a message directly to a queue on the publisherChannel
 * this.request(...) - publish an rpc message, and easily recieve it's reply, creates a new channel for publishing and consuming
 * this.reply(...) - reply to an rpc message on the publisherChannel
+* this.checkQueue(...) - check if a queue exists (creates it's own channel to prevent any unexpected errors)
+* this.checkReplyQueue() - check if a reply-queue exists using message.properties.replyTo (creates it's own channel to prevent any unexpected errors)
 * this.toJSON() - return json version of context (note: will not jsonify context.state, if it includes non-primitives)
 
 ##### Publish example:
@@ -401,11 +403,11 @@ app.use(function * (next) {
   // Non-buffer content will be stringified and casted to a Buffer.
   const content = { foo: 1 }
   const opts = {} // optional
-  yield this.publish('exchange-name', 'routing.key', content, opts)
+  this.publish('exchange-name', 'routing.key', content, opts)
   // ...
 })
 ```
-##### SendToQueue example:
+##### SendToQueue and CheckQueue example:
 ```js
 // `context.sendToQueue` jsdoc:
 /**
@@ -415,6 +417,13 @@ app.use(function * (next) {
  * @param  {Buffer|Object|Array|String} content message content
  * @param  {Object} [options] publish options
  */
+// `context.checkQueue` jsdoc:
+/**
+ * create a channel, check if the queue exists, and close the channel
+ * @param  {String}   queue    queue name
+ * @param  {Function} [cb]     callback, not required if using promises
+ * @return {Promise}  if using promises
+ */
 // Example usage in middleware
 app.use(function * (next) {
   // Works just like amqplib's channel sendToQueue.
@@ -423,11 +432,18 @@ app.use(function * (next) {
   // Non-buffer content will be stringified and casted to a Buffer.
   const content = 'hello'
   const opts = {} // optional
-  yield this.sendToQueue('queue-name', content, opts)
+  // check queue: in some case it may be useful to check existance of a queue before publishing to it
+  var exists = yield this.checkQueue('queue-name')
+  if (!exists) {
+    // handle message: ack, nack, or etc
+    return
+  }
+  // reply
+  this.sendToQueue('queue-name', content, opts)
   // ...
 })
 ```
-##### RPC example:
+##### RPC ( Request, Reply, CheckReplyQueue) example:
 Client.js using `context.request`
 ```js
 // `context.request` jsdoc:
@@ -438,6 +454,7 @@ Client.js using `context.request`
  * @param  {Object}   [sendOpts]  sendToQueue options
  * @param  {Object}   [queueOpts] assertQueue options for replyTo queue, queueOpts.exclusive defaults to true
  * @param  {Object}   [consumeOpts] consume options for replyTo queue, consumeOpts.noAck defaults to true
+ * @param  {Function} [cb] callback, if using callback api
  * @return {Promise} returns a promise
  */
 // Example usage in middleware
@@ -460,6 +477,12 @@ Server.js using `context.reply`
  * @param  {Buffer|Object|Array|String} content message content
  * @param  {Object} options publish options
  */
+// `context.checkReplyQueue` jsdoc:
+/**
+ * create a channel, check if replyTo queue exists, and close the channel
+ * @param  {Function} [cb]    not required if using promises
+ * @return {Promise}  if using promises
+ */
 // Example usage in middleware
 app.use(function * (next) {
   // convert message body to json
@@ -467,6 +490,12 @@ app.use(function * (next) {
   yield next
 })
 app.queue('multiply-queue', function * () {
+  // check reply queue: in some case it may be useful to check existance of a queue before doing any work
+  const exists = yield this.checkReplyQueue()
+  if (!exists) {
+    // handle message: ack, nack, or etc
+    return
+  }
   const content = this.message.content
   const a = content.a
   const b = content.b
