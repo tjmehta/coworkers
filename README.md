@@ -221,7 +221,7 @@ app.on('error', function (err, context) {
     let message = context.message
     let requeue = false
     // nack the message
-    channel.nack(message, requeue)
+    channel.nack(message, false, requeue)
   }
 })
 ```
