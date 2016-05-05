@@ -832,7 +832,7 @@ describe('Application', function () {
               __coworkersErrorHandler: ctx.consumerErrorHandler
             }
             ctx.app.consumerTag = 0
-            ctx.app.producerChannel = {
+            ctx.app.publisherChannel = {
               removeListener: sinon.stub(),
               close: sinon.stub(),
               __coworkersCloseHandler: ctx.producerCloseHandler,
@@ -856,7 +856,7 @@ describe('Application', function () {
 
           it('should close connection and channels', function (done) {
             ctx.app.consumerChannel.close.resolves()
-            ctx.app.producerChannel.close.resolves()
+            ctx.app.publisherChannel.close.resolves()
             ctx.app.connection.close.resolves()
             const promise = ctx.app.close()
             expect(promise).to.equal(ctx.app.closingPromise)
@@ -866,10 +866,10 @@ describe('Application', function () {
               sinon.assert.calledWith(ctx.app.consumerChannel.removeListener, 'close', ctx.consumerCloseHandler)
               sinon.assert.calledWith(ctx.app.consumerChannel.removeListener, 'error', ctx.consumerErrorHandler)
               sinon.assert.calledOnce(ctx.app.consumerChannel.close)
-              sinon.assert.calledTwice(ctx.app.producerChannel.removeListener)
-              sinon.assert.calledWith(ctx.app.producerChannel.removeListener, 'close', ctx.producerCloseHandler)
-              sinon.assert.calledWith(ctx.app.producerChannel.removeListener, 'error', ctx.producerErrorHandler)
-              sinon.assert.calledOnce(ctx.app.producerChannel.close)
+              sinon.assert.calledTwice(ctx.app.publisherChannel.removeListener)
+              sinon.assert.calledWith(ctx.app.publisherChannel.removeListener, 'close', ctx.producerCloseHandler)
+              sinon.assert.calledWith(ctx.app.publisherChannel.removeListener, 'error', ctx.producerErrorHandler)
+              sinon.assert.calledOnce(ctx.app.publisherChannel.close)
               sinon.assert.calledOnce(ctx.app.connection.close)
               sinon.assert.calledTwice(ctx.app.connection.removeListener)
               sinon.assert.calledWith(ctx.app.connection.removeListener, 'close', ctx.connCloseHandler)
