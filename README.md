@@ -529,7 +529,7 @@ Clustering is opinionated, it make the processes work as a unit:
 
 ##### Clustering example:
 
-When clustering is enabled, Coworkers will optimize the number of processes to the number of cpus the server has. The below example will will create four workers in total (to match the number of cpus): two "foo-queue" consumers, and two "bar-queue" consumers. If the number of queues > num cpus, coworkers will only create one consumer per queue. If you want to specify the number of workers per queue you can do this using the environment variable: `COWORKERS_NUM_WORKERS_PER_QUEUE`. If you have any problems w/ a particular worker process you can close it by sending it a `SIGINT` signal, this will gracefully shutdown the process and not respawn a replacement (to restart the worker after stopping it, restart your coworkers app).
+When clustering is enabled, Coworkers will optimize the number of processes to the number of cpus the server has. The below example will will create four workers in total (to match the number of cpus): two "foo-queue" consumers, and two "bar-queue" consumers. If the number of queues > num cpus, coworkers will only create one consumer per queue. If you want to specify the number of workers per queue you can do this using the environment variable: `COWORKERS_WORKERS_PER_QUEUE`. If you have any problems w/ a particular worker process you can close it by sending it a `SIGINT` signal, this will gracefully shutdown the process and not respawn a replacement (to restart the worker after stopping it, restart your coworkers app).
 
 ```js
 // app.js
