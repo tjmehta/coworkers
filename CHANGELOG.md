@@ -1,4 +1,15 @@
+# 0.7.0
+Application:
+  * Added `app.prefetch(...)` to support prefetch options for `consumerChannel`
+Readme:
+  * Added RPC section and links to amqplib-rpc
+
+# 0.6.1
+Application:
+  * Fix `app.close` not closing the `publisherChannel`
+
 # 0.6.0
+Context:
   * Added `context.checkQueue()`
   * Added `context.checkReplyQueue()`
 
