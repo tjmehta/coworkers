@@ -46,6 +46,7 @@ The Coworkers `Application` class is the center of RabbitMQ microservice. It kee
 Methods (documented below):
 
  * `use`
+ * `prefetch`
  * `queue`
  * `connect`
  * `close`
@@ -79,6 +80,28 @@ Use the given middleware for all queues consumed by the app.
  */
 ```
 See "Cascading middleware" section (below) for a full example
+
+### app.prefetch(count, [global])
+Setup prefetch options for the application's consumer channel (`consumerChannel`). Equivalent to http://www.squaremobius.net/amqp.node/channel_api.html#channel_prefetch.
+```js
+/**
+ * @param  {Number} count  the maximum number of messages sent over the channel that can be awaiting ack
+ * @param  {Boolean} [global] flag specifying if prefetch is global (true) or per-channel (false), default: false
+ */
+```
+#### app.prefetch example
+```js
+const coworkers = require('coworkers')
+const app = coworkers()
+
+app.prefetch(100, false) // `global` is optional, and defaults to false
+app.queue('foo-queue', function * () {
+  this.ack = true
+})
+app.on('error', /* ... */)
+
+app.connect()
+```
 
 ### app.queue(queueName, [queueOpts], [consumeOpts], ...middlewares)
 Setup a queue consumer w/ options and middleware. Queues will be asserted and consumed with the given options in `app.connect`.
@@ -325,7 +348,7 @@ app.use(function * () {
 })
 ```
 
-Many of the context's accessors and methods simply delegate to their `this.message`, `this.consumerChannel`, or `this.publisherChannel` equivalents for convenience, and are otherwise identical. For example, `this.deliveryTag` and `this.messageAcked` delegate to the `message`, `this.ack` and `this.nack` delegate to `consumerChannel`, and `this.publish()` and `this.sendToQueue()` delegate to `publisherChannel`.
+Many of the context's accessors and methods simply delegate to their `this.message`, `this.consumerChannel`, or `this.publisherChannel` equivalents for convenience, and are otherwise identical. For example, `this.deliveryTag` and `this.messageAcked` delegate to the `message`, `this.ack` and `this.nack` delegate to `consumerChannel`, and `this.publish(...)` and `this.sendToQueue(...)` delegate to `publisherChannel`.
 
 ### Context Models
 For the most part context models should not need to be used. Context accessor and methods should be more convenient, and allow the message to properly flow "downstream" and "upstream".
@@ -379,8 +402,8 @@ app.use(function * () {
 ### Context Methods
 * this.publish(...) - publish a message to an exchange w/ a routing key on the publisherChannel
 * this.sendToQueue(...) - publish a message directly to a queue on the publisherChannel
-* this.request(...) - publish an rpc message, and easily recieve it's reply, creates a new channel for publishing and consuming
-* this.reply(...) - reply to an rpc message on the publisherChannel
+* this.request(...) - publish an rpc message, and easily recieve it's reply, creates a new channel for publishing and consuming (uses [amqplib-rpc](https://github.com/tjmehta/amqplib-rpc)
+* this.reply(...) - reply to an rpc message on the publisherChannel (uses [amqplib-rpc](https://github.com/tjmehta/amqplib-rpc)
 * this.checkQueue(...) - check if a queue exists (creates it's own channel to prevent any unexpected errors)
 * this.checkReplyQueue() - check if a reply-queue exists using message.properties.replyTo (creates it's own channel to prevent any unexpected errors)
 * this.toJSON() - return json version of context (note: will not jsonify context.state, if it includes non-primitives)
@@ -583,6 +606,9 @@ app.queueNames.forEach(function (queueName) {
 })
 //...
 ```
+
+# RPC utils
+If you need to publish rpc messages from another application you can use [amqplib-rpc](https://github.com/tjmehta/amqplib-rpc). Coworkers uses [amqplib-rpc](https://github.com/tjmehta/amqplib-rpc) under the hood for it's RPC methods, so the method signatures are nearly identical.
 
 # Testing
 Check out [coworkers-test](https://github.com/tjmehta/coworkers-test) it allows you to easily test a coworkers app's message-handling middlewares as a unit w/out requiring rabbitmq.

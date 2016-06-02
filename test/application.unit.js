@@ -262,6 +262,19 @@ describe('Application', function () {
       })
     })
 
+    describe('prefetch', function () {
+      it('should set prefetch opts', function (done) {
+        const before = ctx.app.prefetchOpts
+        ctx.app.prefetch(10, false)
+        expect(before).to.not.exist()
+        expect(ctx.app.prefetchOpts).to.deep.equal({
+          count: 10,
+          global: false
+        })
+        done()
+      })
+    })
+
     describe('messageHandler', function () {
       beforeEach(function (done) {
         ctx.context = { state: {} }
