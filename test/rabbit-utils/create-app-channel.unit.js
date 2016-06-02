@@ -29,6 +29,7 @@ describe('RabbitUtils - createAppChannel', function () {
     sinon.spy(ctx.consumerChannel, 'once')
     ctx.publisherChannel = new EventEmitter()
     sinon.spy(ctx.publisherChannel, 'once')
+    ctx.consumerChannel.prefetch = sinon.stub()
     ctx.consumerChannel.ack = function () {}
     ctx.consumerChannel.nack = function () {}
     // mock connection
@@ -65,6 +66,45 @@ describe('RabbitUtils - createAppChannel', function () {
         expect(function () {
           ctx.consumerChannel.nack(message)
         }).to.throw(/cannot be acked/)
+        // assert prefetch not called
+        sinon.assert.notCalled(ctx.consumerChannel.prefetch)
+        done()
+      }).catch(done)
+  })
+
+  it('should setup prefetch for consumerChannel', function (done) {
+    const count = 10
+    const isGlobal = true
+    ctx.app.prefetch(count, isGlobal)
+    ctx.app.connection.createChannel.resolves(ctx.consumerChannel)
+    createAppChannel(ctx.app, 'consumerChannel')
+      .then(function () {
+        // assert createChannel called
+        sinon.assert.calledOnce(ctx.app.connection.createChannel)
+        // assert channel created
+        expect(ctx.app.consumerChannel).to.exist()
+        expect(ctx.app.consumerChannel).to.equal(ctx.consumerChannel)
+        // assert attached error, close channel handlers
+        const consumerOnce = ctx.app.consumerChannel.once
+        sinon.assert.calledTwice(consumerOnce)
+        sinon.assert.calledWith(consumerOnce, 'close', sinon.match.func)
+        sinon.assert.calledWith(consumerOnce, 'error', sinon.match.func)
+        // assert app emit channel:create
+        sinon.assert.calledOnce(ctx.app.emit)
+        sinon.assert.calledWith(ctx.app.emit, 'channel:create', ctx.consumerChannel)
+        // assert ack and nack wrapped w/ multi call error
+        const message = {}
+        ctx.consumerChannel.ack(message)
+        expect(message.messageAcked).to.be.true()
+        expect(function () {
+          ctx.consumerChannel.ack(message)
+        }).to.throw(/cannot be acked/)
+        expect(function () {
+          ctx.consumerChannel.nack(message)
+        }).to.throw(/cannot be acked/)
+        // assert prefetch called
+        sinon.assert.calledOnce(ctx.consumerChannel.prefetch)
+        sinon.assert.calledWith(ctx.consumerChannel.prefetch, count, isGlobal)
         done()
       }).catch(done)
   })
