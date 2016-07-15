@@ -186,7 +186,7 @@ describe('Application', function () {
         it('should not error if the queue with queueName exists in schema', function (done) {
           ctx.app.queue('queue-name', {}, function * () {})
           // test queueNames for coverage
-          expect(ctx.app.queueNames).deep.equal(['queue-name'])
+          expect(ctx.app.queueNames).equal(['queue-name'])
           done()
         })
       })
@@ -238,25 +238,25 @@ describe('Application', function () {
         it('should setup queue for consumption w/ no opts', function (done) {
           ctx.app.queue('queue-name', function * foo () {})
           // test queueNames for coverage
-          expect(ctx.app.queueNames).deep.equal(['queue-name'])
+          expect(ctx.app.queueNames).equal(['queue-name'])
           done()
         })
         it('should setup queue for consumption w/ queueOpts', function (done) {
           ctx.app.queue('queue-name', {}, function * () {})
           // test queueNames for coverage
-          expect(ctx.app.queueNames).deep.equal(['queue-name'])
+          expect(ctx.app.queueNames).equal(['queue-name'])
           done()
         })
         it('should setup queue for consumption w/ queueOpts and consumeOpts', function (done) {
           ctx.app.queue('queue-name', {}, {}, function * () {})
           // test queueNames for coverage
-          expect(ctx.app.queueNames).deep.equal(['queue-name'])
+          expect(ctx.app.queueNames).equal(['queue-name'])
           done()
         })
         it('should setup queue for consumption w/ multiple middlewares', function (done) {
           ctx.app.queue('queue-name', function * () {}, function * () {})
           // test queueNames for coverage
-          expect(ctx.app.queueNames).deep.equal(['queue-name'])
+          expect(ctx.app.queueNames).equal(['queue-name'])
           done()
         })
       })
@@ -267,7 +267,7 @@ describe('Application', function () {
         const before = ctx.app.prefetchOpts
         ctx.app.prefetch(10, false)
         expect(before).to.not.exist()
-        expect(ctx.app.prefetchOpts).to.deep.equal({
+        expect(ctx.app.prefetchOpts).to.equal({
           count: 10,
           global: false
         })
@@ -336,7 +336,7 @@ describe('Application', function () {
               sinon.assert.calledOnce(ctx.Context)
               sinon.assert.calledWith(
                 ctx.Context, ctx.app, ctx.queueName, ctx.message)
-              expect(ctx.invokeOrder).to.deep.equal([
+              expect(ctx.invokeOrder).to.equal([
                 1,
                 2,
                 3,
@@ -361,7 +361,7 @@ describe('Application', function () {
           const mockContextFactory = require('./mock-context-factory')
           handler(ctx.message, mockContextFactory)
             .then(function (context) {
-              expect(ctx.invokeOrder).to.deep.equal([
+              expect(ctx.invokeOrder).to.equal([
                 1,
                 2,
                 3,
