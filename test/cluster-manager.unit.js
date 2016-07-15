@@ -547,7 +547,7 @@ describe('ClusterManager', function () {
             }).catch(function (err) {
               sinon.assert.calledOnce(ctx.ClusterManager.fork)
               expect(err.message).to.match(/Some worker forks failed/)
-              expect(err.errors).to.deep.equal([ctx.err])
+              expect(err.errors).to.equal([ctx.err])
               expect(ctx.ClusterManager.startingPromise).to.not.exist()
               done()
             }).catch(done)
@@ -590,7 +590,7 @@ describe('ClusterManager', function () {
             sinon.assert.calledOnce(ctx.ClusterManager.killWorker)
             sinon.assert.calledWith(ctx.ClusterManager.killWorker, ctx.worker)
             expect(err.message).to.match(/Some worker kills failed/)
-            expect(err.errors).to.deep.equal([ctx.err])
+            expect(err.errors).to.equal([ctx.err])
             done()
           }).catch(done)
         })

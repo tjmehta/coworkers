@@ -67,7 +67,7 @@ describe('Context', function () {
       expect(context.deliveryTag).to.equal(ctx.message.fields.deliveryTag)
       expect(context.queueOpts).to.contain(ctx.queueOpts)
       expect(context.consumeOpts).to.contain(ctx.consumeOpts)
-      expect(context.state).to.deep.equal({})
+      expect(context.state).to.equal({})
       // ack, nack, ackAll, nackAll tested below
       done()
     })
@@ -117,7 +117,7 @@ describe('Context', function () {
             allUpTo: true
           }
           ctx.context.ack = val
-          expect(ctx.context.ack).to.deep.equal(val)
+          expect(ctx.context.ack).to.equal(val)
           expect(ctx.context.nack).to.not.exist()
           expect(ctx.context.ackAll).to.not.exist()
           expect(ctx.context.nackAll).to.not.exist()
@@ -126,13 +126,13 @@ describe('Context', function () {
             requeue: true
           }
           ctx.context.nack = val
-          expect(ctx.context.nack).to.deep.equal(val)
+          expect(ctx.context.nack).to.equal(val)
           expect(ctx.context.ack).to.not.exist()
           expect(ctx.context.ackAll).to.not.exist()
           expect(ctx.context.nackAll).to.not.exist()
           val = true
           ctx.context.ackAll = val
-          expect(ctx.context.ackAll).to.deep.equal({})
+          expect(ctx.context.ackAll).to.equal({})
           expect(ctx.context.ack).to.not.exist()
           expect(ctx.context.nack).to.not.exist()
           expect(ctx.context.nackAll).to.not.exist()
@@ -140,7 +140,7 @@ describe('Context', function () {
             requeue: true
           }
           ctx.context.nackAll = val
-          expect(ctx.context.nackAll).to.deep.equal(val)
+          expect(ctx.context.nackAll).to.equal(val)
           expect(ctx.context.ack).to.not.exist()
           expect(ctx.context.ackAll).to.not.exist()
           expect(ctx.context.nack).to.not.exist()
@@ -333,7 +333,7 @@ describe('Context', function () {
       it('should return json version of context', function (done) {
         expect(
           Object.keys(ctx.context.toJSON()).sort()
-        ).to.deep.equal([
+        ).to.equal([
           'queueName',
           'message',
           'content',
