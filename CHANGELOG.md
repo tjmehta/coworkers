@@ -1,6 +1,10 @@
 # 0.7.1
+  * Important rpc fix w/ amqplib-rpc@2.0.3, fixes rpc replyTo queue leak
+  * Fixed some wrong `sinon.assert.calledOnce` calls asserting args -> sinon.assert.calledWith
+
+# 0.7.1
   * Updated all out-of-date dependencies
-  * Important rpc fix w/ amqplib-rpc@2.0.2
+  * Important rpc fix w/ amqplib-rpc@2.0.2, fixes rpc request sendOpts
 
 # 0.7.0
 Application:
