@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "101": "^1.6.0",
-    "amqplib-rpc": "^2.0.2",
+    "amqplib-rpc": "^2.0.3",
     "assert-args": "^1.1.3",
     "cast-buffer": "^1.1.0",
     "co": "^4.6.0",
