@@ -473,7 +473,8 @@ describe('Application', function () {
               promise.then(function () {
                 expect(ctx.app.closingPromise).to.not.exist() // deleted by mock closing promise
                 expect(ctx.app.connectingPromise).to.not.exist()
-                sinon.assert.calledOnce(ctx.app.connect, ctx.url, ctx.socketOptions)
+                sinon.assert.calledOnce(ctx.app.connect)
+                sinon.assert.calledWith(ctx.app.connect, ctx.url, ctx.socketOptions)
                 done()
               }).catch(done)
               // resolve close

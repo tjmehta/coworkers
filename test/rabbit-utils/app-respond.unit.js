@@ -80,7 +80,8 @@ describe('RabbitUtils - appRespond', function () {
 
     it('should call consumerChannel.nackAll', function (done) {
       respond.call(ctx.context)
-      sinon.assert.calledOnce(ctx.nackAll, ctx.requeue)
+      sinon.assert.calledOnce(ctx.nackAll)
+      sinon.assert.calledWith(ctx.nackAll, ctx.requeue)
       done()
     })
   })
