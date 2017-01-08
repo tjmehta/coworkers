@@ -44,19 +44,19 @@
     "nodeify": "^1.0.0",
     "object-values": "^1.0.0",
     "promise-retry": "^1.0.2",
-    "times-loop": "^1.0.0"
+    "times-loop": "^2.0.0"
   },
   "devDependencies": {
-    "amqplib": "^0.4.2",
-    "babel-eslint": "^6.1.2",
-    "code": "^3.0.1",
-    "lab": "^10.9.0",
+    "amqplib": "^0.5.1",
+    "babel-eslint": "^7.1.1",
+    "code": "^4.0.0",
+    "lab": "^11.2.1",
     "nodemon": "^1.9.2",
     "proxyquire": "^1.7.10",
     "rabbitmq-schema": "^1.1.0",
     "sinon": "^1.17.4",
     "sinon-as-promised": "^4.0.0",
-    "standard": "^7.1.2"
+    "standard": "^8.6.0"
   },
   "standard": {
     "parser": "babel-eslint"
