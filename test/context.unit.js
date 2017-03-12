@@ -359,6 +359,52 @@ describe('Context', function () {
         ].sort())
         done()
       })
+
+      describe('errors', function () {
+        it('should return json version of context after context error', function (done) {
+          ctx.app.on('error', function () {})
+          Context.onerror(ctx.context, new Error('foo error'))
+          expect(
+            Object.keys(ctx.context.toJSON()).sort()
+          ).to.equal([
+            'queueName',
+            'message',
+            'content',
+            'properties', // props
+            'headers',
+            'messageAcked',
+            'fields', // fields
+            'consumerTag',
+            'deliveryTag',
+            'redelivered',
+            'exchange',
+            'routingKey',
+            // other
+            'queueOpts',
+            'consumeOpts',
+            'state',
+            'appFoo'
+          ].sort())
+          done()
+        })
+
+        it('should throw error if getting a property errors', function (done) {
+          ctx.app.on('error', function () {})
+          Context.onerror(ctx.context, new Error('foo error'))
+          const err = new Error('boom')
+          const throwErr = function () {
+            throw err
+          }
+          Object.defineProperty(ctx.context, 'message', {
+            get: throwErr,
+            set: throwErr
+          })
+          expect(function () {
+            ctx.context.toJSON()
+          }).to.throw(/boom/)
+          done()
+        })
+      })
     })
 
     describe('accessors', function () {
