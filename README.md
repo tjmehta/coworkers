@@ -144,7 +144,7 @@ const RabbitSchema = require('rabbitmq-schema')
 const schema = new RabbitSchema({
   exchange: 'exchange0',
   type: 'direct',
-  options: {}
+  options: {},
   bindings: {
     routingPattern: 'foo.bar.key',
     destination: {
